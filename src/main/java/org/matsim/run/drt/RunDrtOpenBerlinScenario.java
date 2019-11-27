@@ -76,6 +76,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.ControlerDefaultsModule;
 import org.matsim.core.controler.Injector;
 import org.matsim.core.controler.NewControlerModule;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.corelisteners.ControlerDefaultCoreListenersModule;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.mobsim.qsim.QSim;
@@ -86,6 +87,7 @@ import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.TeleportationRoutingModule;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripRouterModule;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioByInstanceModule;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.facilities.ActivityFacilities;
@@ -128,6 +130,7 @@ public final class RunDrtOpenBerlinScenario {
 		}
 		
 		Config config = prepareConfig( args ) ;
+		config.controler().setOverwriteFileSetting( OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists );
 		Scenario scenario = prepareScenario( config ) ;
 		Controler controler = prepareControler( scenario ) ;
 		controler.run() ;
@@ -159,121 +162,10 @@ public final class RunDrtOpenBerlinScenario {
 		// yyyy there is fareSModule (with S) in config. ?!?!  kai, jul'19
 		
 		
-		final AbstractModule module = new AbstractModule() { // yyyyyy use config for other mode
-			@Override public void install() {
-				this.addTravelTimeBinding( TransportMode.car ).toInstance( new FreeSpeedTravelTime() );
-				install( new DvrpModule() );
-				install( new ScenarioByInstanceModule( new Scenario() {
-					@Override public Network getNetwork() {
-						return scenario.getNetwork();
-					}
-					
-					@Override public Population getPopulation() {
-						return scenario.getPopulation();
-					}
-					
-					@Override public TransitSchedule getTransitSchedule() {
-						return scenario.getTransitSchedule();
-					}
-					
-					@Override public Config getConfig() {
-						return scenario.getConfig() ; // correct for swiss rail raptor
-					}
-					
-					@Override public void addScenarioElement( final String name, final Object o ) {
-						throw new RuntimeException( "not implemented" );
-					}
-					
-					@Override public Object getScenarioElement( final String name ) {
-						throw new RuntimeException( "not implemented" );
-					}
-					
-					@Override public ActivityFacilities getActivityFacilities() {
-						return scenario.getActivityFacilities();
-					}
-					
-					@Override public Vehicles getTransitVehicles() {
-						throw new RuntimeException( "not implemented" );
-					}
-					
-					@Override public Vehicles getVehicles() {
-						return scenario.getVehicles();
-					}
-					
-					@Override public Households getHouseholds() {
-						throw new RuntimeException( "not implemented" );
-					}
-					
-					@Override public Lanes getLanes() {
-						throw new RuntimeException( "not implemented" );
-					}
-				} ) );
-				
-				install( new TripRouterModule() );
-//				bind( Network.class ).toInstance( scenario.getNetwork() );
-//				bind(  TransitSchedule.class ).toInstance( scenario.getTransitSchedule() );
-//				bind( Population.class ).toInstance( scenario.getPopulation() );
-				bind( EventsManager.class ).toInstance( EventsUtils.createEventsManager() ); // careful
-				if ( getConfig().transit().isUseTransit() ) {
-					bind( SwissRailRaptor.class ).toProvider( SwissRailRaptorFactory.class );
-
-//					for (String mode : getConfig().transit().getTransitModes()) {
-//						addRoutingModuleBinding(mode).toProvider(SwissRailRaptorRoutingModuleProvider.class);
-//					}
-					addRoutingModuleBinding( TransportMode.transit_walk ).to( Key.get( RoutingModule.class, Names.named( TransportMode.walk ) ) );
-					
-					
-					SwissRailRaptorConfigGroup srrConfig = ConfigUtils.addOrGetModule( getConfig(), SwissRailRaptorConfigGroup.class );
-					
-					if ( srrConfig.isUseRangeQuery() ) {
-						bind( RaptorRouteSelector.class ).to( ConfigurableRaptorRouteSelector.class );
-					} else {
-						bind( RaptorRouteSelector.class ).to( LeastCostRaptorRouteSelector.class ); // just a simple default in case it ever gets used.
-					}
-					
-					switch ( srrConfig.getScoringParameters() ) {
-						case Default:
-							bind( RaptorParametersForPerson.class ).to( DefaultRaptorParametersForPerson.class );
-							break;
-						case Individual:
-							bind( RaptorParametersForPerson.class ).to( IndividualRaptorParametersForPerson.class );
-							break;
-					}
-					
-					if ( srrConfig.isUseIntermodalAccessEgress() ) {
-//						bind(MainModeIdentifier.class).to( IntermodalAwareRouterModeIdentifier.class);
-						switch ( srrConfig.getIntermodalAccessEgressModeSelection() ) {
-							case CalcLeastCostModePerStop:
-								bind( RaptorStopFinder.class ).to( DefaultRaptorStopFinder.class );
-								break;
-							case RandomSelectOneModePerRoutingRequestAndDirection:
-								bind( RaptorStopFinder.class ).to( RandomAccessEgressModeRaptorStopFinder.class );
-								break;
-						}
-					} else {
-						bind( RaptorStopFinder.class ).to( DefaultRaptorStopFinder.class );
-					}
-					
-					bind( RaptorIntermodalAccessEgress.class ).to( DefaultRaptorIntermodalAccessEgress.class );
-				}
-				bind( MyProvider.class );
-				
-				final MultiModeDrtConfigGroup multiModeDrtCfg = ConfigUtils.addOrGetModule( getConfig(), MultiModeDrtConfigGroup.class );;
-				
-				for (DrtConfigGroup drtCfg : multiModeDrtCfg.getModalElements()) {
-					install(new DrtModeModule(drtCfg));
-				}
-				
-			}
-		};
-		
-//		final AbstractModule module2 = AbstractModule.override( Collections.singleton(module), new MultiModeDrtModule() );;
-		
-		final com.google.inject.Injector injector = Injector.createInjector( scenario.getConfig(), module );
-		final Provider<RoutingModule> specialRaptor = injector.getInstance( MyProvider.class );;
 		
 		controler.addOverridingModule( new AbstractModule() {
 			@Override public void install() {
+				this.bind( SwissRailRaptorRoutingModuleProvider.class ) ;
 				this.addRoutingModuleBinding( "drt_pt_drt" ).toProvider( MyProvider.class ) ;
 			}
 		} );
@@ -329,7 +221,7 @@ public final class RunDrtOpenBerlinScenario {
 //		config.transit().setUsingTransitInMobsim(false);
 
 		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
-
+		
 		return config ;
 	}
 	
@@ -394,21 +286,60 @@ public final class RunDrtOpenBerlinScenario {
 	
 	private static class MyProvider implements Provider<RoutingModule> {
 		
-		private final SwissRailRaptor raptor;
-		private final Network network;
-		private final TransitSchedule schedule;
-		private final RoutingModule transitWalkRouter;
+		@Inject private Scenario scenario ;
 		@Inject private com.google.inject.Injector injector;
 		
-		@Inject
-		MyProvider( SwissRailRaptor raptor, Network network, TransitSchedule schedule, @Named("transit_walk") RoutingModule transitWalkRouter) {
-			this.raptor = raptor;
-			this.network = network;
-			this.schedule = schedule;
-			this.transitWalkRouter = transitWalkRouter;
-		}
-		
 		public RoutingModule get() {
+			Module module = new com.google.inject.AbstractModule() {
+				@Override public void configure() {
+//					install( new ScenarioByInstanceModule( new Scenario() {
+//						@Override public Network getNetwork() {
+//							return scenario.getNetwork();
+//						}
+//
+//						@Override public Population getPopulation() {
+//							return scenario.getPopulation();
+//						}
+//
+//						@Override public TransitSchedule getTransitSchedule() {
+//							return scenario.getTransitSchedule();
+//						}
+//
+//						@Override public Config getConfig() {
+//							return scenario.getConfig() ; // correct for swiss rail raptor
+//						}
+//
+//						@Override public void addScenarioElement( final String name, final Object o ) {
+//							throw new RuntimeException( "not implemented" );
+//						}
+//
+//						@Override public Object getScenarioElement( final String name ) {
+//							throw new RuntimeException( "not implemented" );
+//						}
+//
+//						@Override public ActivityFacilities getActivityFacilities() {
+//							return scenario.getActivityFacilities();
+//						}
+//
+//						@Override public Vehicles getTransitVehicles() {
+//							throw new RuntimeException( "not implemented" );
+//						}
+//
+//						@Override public Vehicles getVehicles() {
+//							return scenario.getVehicles();
+//						}
+//
+//						@Override public Households getHouseholds() {
+//							throw new RuntimeException( "not implemented" );
+//						}
+//
+//						@Override public Lanes getLanes() {
+//							throw new RuntimeException( "not implemented" );
+//						}
+//					} ) );
+				
+				}
+			} ;
 			com.google.inject.Injector qsimInjector = injector.createChildInjector(module);
 			
 			final SwissRailRaptorRoutingModuleProvider result = qsimInjector.getInstance( SwissRailRaptorRoutingModuleProvider.class );
