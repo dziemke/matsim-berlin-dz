@@ -105,8 +105,9 @@ public final class RunBerlinScenario {
 		// note that the path for this is different when run from GUI (path of original config) vs.
 		// when run from command line/IDE (java root).  :-(    See comment in method.  kai, jul'18
 		// yy Does this comment still apply?  kai, jul'19
-
-		final Scenario scenario = ScenarioUtils.loadScenario( config );
+		
+//		final Scenario scenario = ScenarioUtils.loadScenario( config );
+		final Scenario scenario = ScenarioUtils.createScenario( config );
 
 		return scenario;
 	}
