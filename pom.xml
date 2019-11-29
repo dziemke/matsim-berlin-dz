@@ -131,6 +131,14 @@
 			<artifactId>freight</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>
+		<!-- This is the matsim "locationchoice" contrib: -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>locationchoice</artifactId>
+			<version>${matsim.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>

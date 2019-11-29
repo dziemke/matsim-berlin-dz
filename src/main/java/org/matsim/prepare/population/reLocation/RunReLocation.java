@@ -31,7 +31,7 @@ public class RunReLocation {
     private static final Logger log = Logger.getLogger(RunReLocation.class);
     private static Random random = MatsimRandom.getRandom();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedURLException {
 
         String planFile;
         String shapeFile;
@@ -41,11 +41,12 @@ public class RunReLocation {
 
         if (args.length == 0 || args[0].equals("")) {
 
-            planFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-1pct/input/berlin-v5.4-1pct.plans.xml.gz";
-            shapeFile = "https://svn.vsp.tu-berlin.de/repos/shared-svn/studies/countries/de/open_berlin_scenario/activity-relocation/shapeFile/grid_2000_intersect_Id.shp";
-            facilitiesFile = "https://svn.vsp.tu-berlin.de/repos/shared-svn/studies/countries/de/open_berlin_scenario/activity-relocation/osm/combinedFacilities_BB_BE.xml.gz";
-            outputPlans = "D:/Arbeit/Berlin/ReLocation/zweiter Versuch/PlansWithNewLocations5000.xml";
-            logFile = "D:/Arbeit/Berlin/ReLocation/zweiter Versuch/log5000";
+//            planFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-1pct/input/berlin-v5.4-1pct.plans.xml.gz";
+            planFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-10pct.plans_uncalibrated.xml.gz";
+            shapeFile = "https://svn.vsp.tu-berlin.de/repos/shared-svn/studies/countries/de/open_berlin_scenario/activity-relocation/shapeFile/grid_5000_intersect_Id.shp";
+            facilitiesFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/original-data/activity-relocation/osm/combinedFacilities_BB_BE.xml.gz";
+            outputPlans = "D:/Arbeit/Berlin/ReLocation/drt/10/PlansWithNewLocations5000.xml.gz";
+            logFile = "D:/Arbeit/Berlin/ReLocation/drt/10/log5000";
 
         } else {
 
@@ -70,11 +71,7 @@ public class RunReLocation {
         matsimFacilitiesReader.readFile(facilitiesFile);
 
         PopulationReader populationReader = new PopulationReader(scenario);
-        try {
-            populationReader.readURL(new URL(planFile));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        populationReader.readURL(new URL(planFile));
 
         Map<String, Geometry> allZones = readShapeFile(shapeFile);
 
@@ -103,7 +100,6 @@ public class RunReLocation {
     /**
      * creates a new population file with new coordinates for specific activities
      *
-     * @param outputPlans           - the location for the output plan file
      * @param allZones              - a shape file with zones
      * @param newLeisureFacilities  - a map with zoneId and a list of coordinates for leisure
      * @param newShoppingFacilities - a map with zoneId and a list of coordinates for shopping
@@ -115,8 +111,6 @@ public class RunReLocation {
                                             Population population) {
 
         PopulationFactory populationFactory = population.getFactory();
-        Population outPopulation = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation();
-
 
         for (Person person : population.getPersons().values()) {
 
@@ -168,8 +162,8 @@ public class RunReLocation {
      * @return a map with the zoneId as keys and a geometry as value
      */
 
-    public static Map<String, Geometry> readShapeFile(String shapeFile) {
-        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFile);
+    public static Map<String, Geometry> readShapeFile(String shapeFile) throws MalformedURLException {
+        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(new URL(shapeFile));
         Map<String, Geometry> districts = new HashMap<>();
 
         for (SimpleFeature feature : features) {
