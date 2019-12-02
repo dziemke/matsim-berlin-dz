@@ -135,11 +135,11 @@ public final class RunBerlinFrozenTastesScenario {
 		config.plansCalcRoute().removeModeRoutingParams("undefined");
 		
 		// TransportMode.non_network_walk has no longer a default, copy from walk
-		ModeRoutingParams walkRoutingParams = config.plansCalcRoute().getOrCreateModeRoutingParams(TransportMode.walk);
-		ModeRoutingParams non_network_walk_routingParams = new ModeRoutingParams(TransportMode.non_network_walk);
-		non_network_walk_routingParams.setBeelineDistanceFactor(walkRoutingParams.getBeelineDistanceFactor());
-		non_network_walk_routingParams.setTeleportedModeSpeed(walkRoutingParams.getTeleportedModeSpeed());
-		config.plansCalcRoute().addModeRoutingParams(non_network_walk_routingParams);
+//		ModeRoutingParams walkRoutingParams = config.plansCalcRoute().getOrCreateModeRoutingParams(TransportMode.walk);
+//		ModeRoutingParams non_network_walk_routingParams = new ModeRoutingParams(TransportMode.non_network_walk);
+//		non_network_walk_routingParams.setBeelineDistanceFactor(walkRoutingParams.getBeelineDistanceFactor());
+//		non_network_walk_routingParams.setTeleportedModeSpeed(walkRoutingParams.getTeleportedModeSpeed());
+//		config.plansCalcRoute().addModeRoutingParams(non_network_walk_routingParams);
 	
 		config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles( true );
 				
