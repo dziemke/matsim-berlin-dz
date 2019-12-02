@@ -162,6 +162,10 @@ public final class RunBerlinFrozenTastesScenario {
 			flexTyp = flexTyp + "shopping_" + ii + ".0,";
 			scalFac = scalFac + "1.0,1.0,";
 		}
+
+		scalFac = scalFac.substring(0, scalFac.length() - 1);
+		flexTyp = flexTyp.substring(0, flexTyp.length() - 1);
+
 		config.planCalcScore().addActivityParams( new ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
 
 		ConfigUtils.applyCommandline( config, typedArgs ) ;
@@ -182,10 +186,8 @@ public final class RunBerlinFrozenTastesScenario {
 		config.strategy().addStrategySettings( new StrategyConfigGroup.StrategySettings( ).setStrategyName( FrozenTastes.LOCATION_CHOICE_PLAN_STRATEGY ).setWeight( 1.0 ).setDisableAfter( 10 ) );
 
 		FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule( config, FrozenTastesConfigGroup.class );;
-		scalFac = scalFac.substring(0, scalFac.length() - 1);
 		dccg.setEpsilonScaleFactors(scalFac);
 		dccg.setAlgorithm( FrozenTastesConfigGroup.Algotype.bestResponse );
-		flexTyp = flexTyp.substring(0, flexTyp.length() - 1);
 		dccg.setFlexibleTypes(flexTyp);
 		dccg.setTravelTimeApproximationLevel( FrozenTastesConfigGroup.ApproximationLevel.localRouting );
 		dccg.setRandomSeed( 2 );
