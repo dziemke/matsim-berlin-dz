@@ -106,8 +106,8 @@ public final class RunBerlinScenario {
 		// when run from command line/IDE (java root).  :-(    See comment in method.  kai, jul'18
 		// yy Does this comment still apply?  kai, jul'19
 		
-//		final Scenario scenario = ScenarioUtils.loadScenario( config );
-		final Scenario scenario = ScenarioUtils.createScenario( config );
+		final Scenario scenario = ScenarioUtils.loadScenario( config );
+//		final Scenario scenario = ScenarioUtils.createScenario( config );
 
 		return scenario;
 	}
