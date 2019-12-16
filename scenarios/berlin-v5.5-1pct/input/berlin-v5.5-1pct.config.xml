@@ -63,26 +63,12 @@
 		<param name="insertingWaitingVehiclesBeforeDrivingVehicles" value="true" />
 	</module>
 	<module name="strategy" >
-		<param name="fractionOfIterationsToDisableInnovation" value="0.8" />
 		<parameterset type="strategysettings" >
-			<param name="strategyName" value="ChangeExpBeta" />
-			<param name="subpopulation" value="person" />
-			<param name="weight" value="0.85" />
-		</parameterset>
-		<parameterset type="strategysettings" >
-			<param name="strategyName" value="ReRoute" />
-			<param name="subpopulation" value="person" />
-			<param name="weight" value="0.05" />
-		</parameterset>
-		<parameterset type="strategysettings" >
-			<param name="strategyName" value="SubtourModeChoice" />
-			<param name="subpopulation" value="person" />
-			<param name="weight" value="0.05" />
-		</parameterset>
-		<parameterset type="strategysettings" >
-			<param name="strategyName" value="TimeAllocationMutator" />
-			<param name="subpopulation" value="person" />
-			<param name="weight" value="0.05" />
+			<param name="disableAfterIteration" value="10" />
+			<param name="executionPath" value="null" />
+			<param name="strategyName" value="frozenTastesLocationChoicePlanStrategy" />
+			<param name="subpopulation" value="null" />
+			<param name="weight" value="1.0" />
 		</parameterset>
 		<parameterset type="strategysettings" >
 			<param name="strategyName" value="ChangeExpBeta" />
@@ -104,7 +90,22 @@
 	</module>
 	<module name="travelTimeCalculator" >
 		<param name="analyzedModes" value="car,freight" />
+		<param name="calculateLinkToLinkTravelTimes" value="false" />
+		<param name="calculateLinkTravelTimes" value="true" />
+		<!-- (only for backwards compatiblity; only used if separateModes==false)  Only modes included in analyzedModes are included. -->
+		<param name="filterModes" value="false" />
+		<!-- The lenght (in sec) of the time period that is splited into time bins; an additional time bin is created to aggregate all travel times collected after maxTime -->
+		<param name="maxTime" value="108000" />
+		<!-- (only for backwards compatibility) If false, link travel times are measured and aggregated over all vehicles using the link. -->
 		<param name="separateModes" value="true" />
+		<!-- How to deal with congested time bins that have no link entry events. `optimistic' assumes free speed (too optimistic); 'experimental_LastMile' is experimental and probably too pessimistic. -->
+		<param name="travelTimeAggregator" value="optimistic" />
+		<!-- The size of the time bin (in sec) into which the link travel times are aggregated for the router -->
+		<param name="travelTimeBinSize" value="900" />
+		<!-- possible values: TravelTimeCalculatorArray TravelTimeCalculatorHashMap  -->
+		<param name="travelTimeCalculator" value="TravelTimeCalculatorArray" />
+		<!-- How to deal with link entry times at different positions during the time bin. Currently supported: average, linearinterpolation -->
+		<param name="travelTimeGetter" value="average" />
 	</module>
 	<module name="vspExperimental" >
 		<param name="vspDefaultsCheckingLevel" value="abort" />
@@ -113,17 +114,25 @@
 		<param name="fractionOfIterationsToStartScoreMSA" value="1.0" />
 		<parameterset type="scoringParameters" >
 			<parameterset type="modeParams" >
-				<param name="constant" value="-0.45" />
-				<param name="marginalUtilityOfTraveling_util_hr" value="0.0" />
+				<!-- [utils] alternative-specific constant.  Normally per trip, but that is probably buggy for multi-leg trips. -->
+				<param name="constant" value="0.0" />
+				<!-- [money] daily monetary constant. default=0 to be backwards compatible -->
+				<param name="dailyMonetaryConstant" value="0.0" />
+				<!-- [utils] daily utility constant. default=0 to be backwards compatible -->
+				<param name="dailyUtilityConstant" value="0.0" />
+				<!-- [utils/m] utility of traveling (e.g. walking or driving) per m, normally negative.  this is on top of the time (dis)utility. -->
+				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
+				<!-- [utils/hr] additional marginal utility of traveling.  normally negative.  this comes on top of the opportunity cost of time -->
+				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="car" />
-				<param name="monetaryDistanceRate" value="-0.0002" />
-				<param name="dailyMonetaryConstant" value="-5.3" />
+				<!-- [unit_of_money/m] conversion of distance into money. Normally negative. -->
+				<param name="monetaryDistanceRate" value="0.0" />
 			</parameterset>
 			<parameterset type="modeParams" >
 				<param name="constant" value="-0.0" />
-				<param name="marginalUtilityOfTraveling_util_hr" value="0.0" />
+				<param name="marginalUtilityOfTraveling_util_hr" value="-6.0" />
 				<param name="mode" value="ride" />
-				<param name="monetaryDistanceRate" value="-0.0002" />
+				<param name="monetaryDistanceRate" value="0.0" />
 				<param name="dailyMonetaryConstant" value="-0.0" />
 			</parameterset>
 			<parameterset type="modeParams" >
