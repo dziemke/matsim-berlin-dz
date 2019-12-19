@@ -39,6 +39,13 @@
 			<id>ojo-snapshots</id>
 			<url>http://oss.jfrog.org/libs-snapshot</url>
 		</repository>
+		
+		<!-- Discrete Mode Choice Module -->
+		<repository>
+			<id>matsim-eth</id>
+			<url>https://dl.bintray.com/matsim-eth/matsim</url>
+		</repository>
+		
 
 	</repositories>
 
@@ -138,6 +145,13 @@
 	    	<artifactId>matsim-analysis</artifactId>
 	    	<!-- <version>v2.5</version> -->
 	    	<version>6f886379ca</version>
+		</dependency>
+		
+		<!-- Discrete Mode Choice -->
+		<dependency>
+    		<groupId>ch.ethz.matsim</groupId>
+    		<artifactId>discrete_mode_choice</artifactId>
+    		<version>1.0.9-dev</version>
 		</dependency>
 
 		<dependency>

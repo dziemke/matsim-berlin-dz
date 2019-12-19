@@ -46,6 +46,16 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 
+import ch.ethz.matsim.discrete_mode_choice.modules.ConstraintModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
+import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.EstimatorModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.FilterModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
+import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.ShapeFileConstraintConfigGroup;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.TourLengthFilterConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 /**
@@ -103,6 +113,9 @@ public final class RunBerlinScenario {
 				bind(AnalysisMainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifier.class);
 			}
 		} );
+		controler.addOverridingModule(new DiscreteModeChoiceModule());
+		controler.addOverridingModule(new BerlinModeChoiceModule());
+		controler.addOverridingModule(new FilterModule());
 
 		return controler;
 	}
@@ -163,6 +176,37 @@ public final class RunBerlinScenario {
 			config.planCalcScore().addActivityParams( new ActivityParams( "other_" + ii + ".0" ).setTypicalDuration( ii ) );
 		}
 		config.planCalcScore().addActivityParams( new ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
+
+		DiscreteModeChoiceConfigurator.configureAsSubtourModeChoiceReplacement(config);
+		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
+
+		dmcConfig.setModeAvailability("BerlinModeAvailability");
+		
+		// this only counts and restricts the number of trips to be considered a tour
+//		dmcConfig.setTourFilters(Arrays.asList(FilterModule.TOUR_LENGTH));
+		
+//		TourLengthFilterConfigGroup tourLengthFilterDrtCfg = dmcConfig.getTourLengthFilterConfigGroup();
+//		tourLengthFilterDrtCfg.setMaximumLength(maximumLength);
+
+		dmcConfig.setTourConstraints(
+				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
+		
+		/*
+		 * in theory ConstraintModule.TRANSIT_WALK goes here, but this works only in
+		 * DiscreteModeChoiceConfigurator.configureAsModeChoiceInTheLoop(config); because right with
+		 * configureAsSubtourModeChoiceReplacement there is no utility estimator and therefore the router is not called
+		 * and we have no route to run the ConstraintModule.TRANSIT_WALK on.
+		 */
+		dmcConfig.setTripConstraints(
+				Arrays.asList("KeepRide", ConstraintModule.SHAPE_FILE));
+		
+		// drt constraint via drt
+//		ShapeFileConstraintConfigGroup shpFileConstraintDrtCfg = dmcConfig.getShapeFileConstraintConfigGroup();
+//		shpFileConstraintDrtCfg.setConstrainedModesAsString(TransportMode.drt);
+//		shpFileConstraintDrtCfg.setRequirement(ch.ethz.matsim.discrete_mode_choice.components.constraints.ShapeFileConstraint.Requirement.BOTH);
+//		shpFileConstraintDrtCfg.setPath("drt service area + buffer shp file");
+
+		dmcConfig.setCachedModes(Arrays.asList("car", "pt", "bicycle", "walk", "freight", "ride"));
 
 		ConfigUtils.applyCommandline( config, typedArgs ) ;
 
