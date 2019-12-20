@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE population SYSTEM "http://www.matsim.org/files/dtd/population_v6.dtd">
+
+<population>
+
+	<attributes>
+		<attribute name="coordinateReferenceSystem" class="java.lang.String">EPSG:31468</attribute>
+	</attributes>
+
+
+<!-- ====================================================================== -->
+
+		<person id="388573001">
+		<attributes>
+			<attribute name="home-activity-zone" class="java.lang.String">berlin</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="133.47163448666942" selected="yes">
+			<activity type="home" link="128196" x="4601421.500901019" y="5823842.843803248" end_time="08:12:29" >
+				<attributes>
+					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
+				</attributes>
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="leisure" link="20239" max_dur="02:06:12" >
+				<attributes>
+					<attribute name="cemdapStopDuration_s" class="java.lang.Integer">6540</attribute>
+					<attribute name="zoneId" class="java.lang.String">903051022</attribute>
+				</attributes>
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="home" link="128196" x="4601421.500901019" y="5823842.843803248" max_dur="01:49:09" >
+				<attributes>
+					<attribute name="cemdapStopDuration_s" class="java.lang.Integer">7140</attribute>
+					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
+				</attributes>
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="shopping" link="128179" max_dur="00:20:37" >
+				<attributes>
+					<attribute name="cemdapStopDuration_s" class="java.lang.Integer">840</attribute>
+					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
+				</attributes>
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="home" link="128196" x="4601421.500901019" y="5823842.843803248" >
+				<attributes>
+					<attribute name="cemdapStopDuration_s" class="java.lang.Integer">49500</attribute>
+					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
+				</attributes>
+			</activity>
+		</plan>
+
+	</person>
+</population>

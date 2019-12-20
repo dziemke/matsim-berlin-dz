@@ -186,7 +186,7 @@ public final class RunBerlinFrozenTastesScenario {
 
 		FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule( config, FrozenTastesConfigGroup.class );;
 		dccg.setEpsilonScaleFactors(scalFac);
-		dccg.setAlgorithm( FrozenTastesConfigGroup.Algotype.random );
+		dccg.setAlgorithm( FrozenTastesConfigGroup.Algotype.bestResponse );
 		dccg.setFlexibleTypes(flexTyp);
 		dccg.setTravelTimeApproximationLevel( FrozenTastesConfigGroup.ApproximationLevel.localRouting );
 		dccg.setRandomSeed( 2 );

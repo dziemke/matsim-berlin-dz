@@ -20,18 +20,14 @@
 package org.matsim.run.debug;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastes;
 import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastesConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup;
@@ -42,11 +38,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.scoring.ScoringFunction;
-import org.matsim.core.scoring.ScoringFunctionFactory;
-import org.matsim.core.scoring.SumScoringFunction;
-import org.matsim.core.scoring.functions.*;
-import org.matsim.prepare.population.reLocation.MyScoringFunction;
 
 import java.util.Arrays;
 
@@ -71,6 +62,12 @@ public final class RunBerlinScenarioDebug {
 		}
 
 		Config config = prepareConfig( args ) ;
+		config.plans().setInputFile("D:/Arbeit/Berlin/ReLocation/debug frozen tastes/berlin-v5.5-plans_onePersonCoord.xml.gz");
+		config.controler().setOutputDirectory("D:/Arbeit/Berlin/ReLocation/debug frozen tastes/output");
+		config.facilities().setInputFile("D:/Arbeit/Berlin/ReLocation/debug frozen tastes/facilitiesOpenBerlinDebug.xml.gz");
+		config.planCalcScore().addActivityParams(
+				new ActivityParams("car interaction").setScoringThisActivityAtAll(false)
+		);
 		Scenario scenario = prepareScenario( config ) ;
 		Controler controler = prepareControler( scenario ) ;
 		controler.run() ;
@@ -167,10 +164,10 @@ public final class RunBerlinScenarioDebug {
 			config.planCalcScore().addActivityParams( new ActivityParams( "shopping").setTypicalDuration( 1200 ).setOpeningTime(8. * 3600. ).setClosingTime(20. * 3600. ).setScoringThisActivityAtAll(false) );
 		config.planCalcScore().addActivityParams( new ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ).setScoringThisActivityAtAll(false) );
 
-		config.plans().setInputFile("D:/Arbeit/Berlin/ReLocation/debug frozen tastes/berlin-v5.5-plans_onePerson.xml.gz");
+
 		config.controler().setLastIteration(2);
 		config.controler().setWriteEventsUntilIteration(2);
-		config.controler().setOutputDirectory("D:/Arbeit/Berlin/ReLocation/debug frozen tastes/output");
+
 
 		config.controler().setWriteEventsUntilIteration(2);
 		config.strategy().setFractionOfIterationsToDisableInnovation(Double.POSITIVE_INFINITY);
@@ -181,21 +178,19 @@ public final class RunBerlinScenarioDebug {
 //			}
 //		}
 
-		config.facilities().setInputFile("D:/Arbeit/Berlin/ReLocation/debug frozen tastes/facilitiesOpenBerlinDebug.xml.gz");
+
 
 		config.strategy().addStrategySettings( new StrategyConfigGroup.StrategySettings( ).setStrategyName( FrozenTastes.LOCATION_CHOICE_PLAN_STRATEGY ).setWeight( 1 ).setDisableAfter( 10 ).setSubpopulation("person") );
 
 		FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule( config, FrozenTastesConfigGroup.class );;
-		dccg.setEpsilonScaleFactors("1.0, 1.0");
+		dccg.setEpsilonScaleFactors("1.0,1.0");
 		dccg.setAlgorithm( FrozenTastesConfigGroup.Algotype.bestResponse );
-		dccg.setFlexibleTypes("leisure, shopping");
+		dccg.setFlexibleTypes("leisure,shopping");
 		dccg.setTravelTimeApproximationLevel( FrozenTastesConfigGroup.ApproximationLevel.localRouting );
 		dccg.setRandomSeed( 2 );
-		dccg.setDestinationSamplePercent( 1. );
+		dccg.setDestinationSamplePercent( 100. );
 
-		config.planCalcScore().addActivityParams(
-				new ActivityParams("car interaction").setScoringThisActivityAtAll(false)
-		);
+
 		config.planCalcScore().addActivityParams(
 				new ActivityParams("pt interaction").setScoringThisActivityAtAll(false)
 		);
