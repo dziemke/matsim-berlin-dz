@@ -5,12 +5,25 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastes;
+import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastesConfigGroup;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.StrategyConfigGroup;
+import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.run.RunBerlinScenarioTest;
 import org.matsim.run.debug.RunBerlinScenarioDebug;
 import org.matsim.testcases.MatsimTestUtils;
+
+import java.util.Arrays;
+
+import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 public class RunBerlinFrozenTastesScenarioTest {
 
@@ -30,23 +43,17 @@ public class RunBerlinFrozenTastesScenarioTest {
     @Test
     public final void endDurationTest () {
         try {
-            String configFilename = "test/input/frozenTastes/berlin-v5.5-1pct.config.xml";
-            final String[] args = {configFilename,
-                    "--config:controler.runId", "test-run-ID"};
-
-            Config config = RunBerlinScenarioDebug.prepareConfig( args );
-            config.controler().setOutputDirectory(utils.getOutputDirectory());
+            Config config = prepareConfig();
             config.plans().setInputFile("test-Person-noEndTime.xml");
-            config.facilities().setInputFile("twoFacilities.xml");
             config.planCalcScore().addActivityParams(
                     new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
             );
+
             Scenario scenario = RunBerlinScenarioDebug.prepareScenario(config);
             Controler controler = RunBerlinScenarioDebug.prepareControler(scenario);
 
             controler.run();
 
-            Assert.assertEquals("Wrong parameter from command line", "test-run-ID", config.controler().getRunId());
             log.info( "Done with endDurationTest"  );
             log.info("") ;
 
@@ -56,26 +63,21 @@ public class RunBerlinFrozenTastesScenarioTest {
     }
 
     @Test
-    public final void backwardPathTest () {
+    // previously named backwardPathTest, but backWardPath was fixed
+    public final void calPlanWithMarginalUtilityOfDistance_mOrMonetaryDistanceCostRate() {
         try {
-            String configFilename = "test/input/frozenTastes/berlin-v5.5-1pct.config.xml";
-            final String[] args = {configFilename,
-                    "--config:controler.runId", "test-run-ID"};
-
-            Config config = RunBerlinScenarioDebug.prepareConfig(args);
-            config.controler().setOutputDirectory(utils.getOutputDirectory());
+            Config config = prepareConfig();
             config.plans().setInputFile("test-Person.xml");
-            config.facilities().setInputFile("twoFacilities.xml");
-            config.planCalcScore().addModeParams(new PlanCalcScoreConfigGroup.ModeParams("car").setMarginalUtilityOfDistance(-5));
+            config.planCalcScore().addModeParams(new PlanCalcScoreConfigGroup.ModeParams("car").setMarginalUtilityOfDistance(-6));
             config.planCalcScore().addActivityParams(
                     new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
             );
+
             Scenario scenario = RunBerlinScenarioDebug.prepareScenario(config);
             Controler controler = RunBerlinScenarioDebug.prepareControler(scenario);
 
             controler.run();
 
-            Assert.assertEquals("Wrong parameter from command line", "test-run-ID", config.controler().getRunId());
             log.info("Done with backwardPathTest");
             log.info("");
 
@@ -87,21 +89,15 @@ public class RunBerlinFrozenTastesScenarioTest {
     @Test
     public final void modeInteractionTest () {
         try {
-            String configFilename = "test/input/frozenTastes/berlin-v5.5-1pct.config.xml";
-            final String[] args = {configFilename,
-                    "--config:controler.runId", "test-run-ID"};
-
-            Config config = RunBerlinScenarioDebug.prepareConfig(args);
-            config.controler().setOutputDirectory(utils.getOutputDirectory());
-            config.plans().setInputFile("test-Person.xml");
+            Config config = prepareConfig();
             config.facilities().setInputFile("twoFacilities.xml");
+//            config.controler().setLastIteration(2);
 
             Scenario scenario = RunBerlinScenarioDebug.prepareScenario(config);
             Controler controler = RunBerlinScenarioDebug.prepareControler(scenario);
 
             controler.run();
 
-            Assert.assertEquals("Wrong parameter from command line", "test-run-ID", config.controler().getRunId());
             log.info("Done with modeInteractionTest");
             log.info("");
 
@@ -109,4 +105,58 @@ public class RunBerlinFrozenTastesScenarioTest {
             throw new RuntimeException(ee);
         }
     }
+
+    private Config prepareConfig() {
+
+        Config config = ConfigUtils.loadConfig("test/input/frozenTastes/berlin-v5.5-1pct.config.xml");
+        config.controler().setOutputDirectory(utils.getOutputDirectory());
+        config.facilities().setInputFile("twoFacilities.xml");
+
+        config.controler().setWriteEventsInterval(1);
+        config.controler().setWritePlansInterval(1);
+        config.controler().setLastIteration(1);
+        config.controler().setWriteEventsUntilIteration(1);
+        config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+
+        config.transit().setUseTransit(false);
+
+        // berlin stuff
+        {
+            config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
+            config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
+            config.plansCalcRoute().setRoutingRandomness(3.);
+            config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
+
+            // vsp defaults
+            config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
+            config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+            // config.qsim().setUsingTravelTimeCheckInTeleportation( true );
+            config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
+
+            // activities
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("home").setTypicalDuration(7200).setScoringThisActivityAtAll(false));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("leisure").setTypicalDuration(7200).setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.).setScoringThisActivityAtAll(false));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shopping").setTypicalDuration(1200).setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.).setScoringThisActivityAtAll(false));
+
+            config.strategy().setFractionOfIterationsToDisableInnovation(Double.POSITIVE_INFINITY);
+
+        }
+
+		// using relocation contrib
+        {
+            config.strategy().addStrategySettings(new StrategyConfigGroup.StrategySettings().setStrategyName(FrozenTastes.LOCATION_CHOICE_PLAN_STRATEGY).setWeight(1).setDisableAfter(10).setSubpopulation("person"));
+
+            FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule(config, FrozenTastesConfigGroup.class);
+
+            dccg.setEpsilonScaleFactors("1.0,1.0");
+            dccg.setAlgorithm(FrozenTastesConfigGroup.Algotype.bestResponse);
+            dccg.setFlexibleTypes("leisure,shopping");
+            dccg.setTravelTimeApproximationLevel(FrozenTastesConfigGroup.ApproximationLevel.localRouting);
+            dccg.setRandomSeed(2);
+            dccg.setDestinationSamplePercent(100.);
+        }
+
+        return config ;
+    }
+
 }
