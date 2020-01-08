@@ -15,11 +15,9 @@ import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenarioTest;
-import org.matsim.run.debug.RunBerlinScenarioDebug;
 import org.matsim.testcases.MatsimTestUtils;
-
-import java.util.Arrays;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
@@ -47,8 +45,10 @@ public class RunBerlinFrozenTastesScenarioTest {
                     new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
             );
 
-            Scenario scenario = RunBerlinScenarioDebug.prepareScenario(config);
-            Controler controler = RunBerlinScenarioDebug.prepareControler(scenario);
+            Scenario scenario = ScenarioUtils.loadScenario( config );
+            Controler controler = new Controler( scenario );
+
+            FrozenTastes.configure( controler );
 
             controler.run();
 
@@ -71,8 +71,10 @@ public class RunBerlinFrozenTastesScenarioTest {
                     new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
             );
 
-            Scenario scenario = RunBerlinScenarioDebug.prepareScenario(config);
-            Controler controler = RunBerlinScenarioDebug.prepareControler(scenario);
+            Scenario scenario = ScenarioUtils.loadScenario( config );
+            Controler controler = new Controler( scenario );
+
+            FrozenTastes.configure( controler );
 
             controler.run();
 
@@ -91,8 +93,10 @@ public class RunBerlinFrozenTastesScenarioTest {
             config.facilities().setInputFile("twoFacilities.xml");
 //            config.controler().setLastIteration(2);
 
-            Scenario scenario = RunBerlinScenarioDebug.prepareScenario(config);
-            Controler controler = RunBerlinScenarioDebug.prepareControler(scenario);
+            Scenario scenario = ScenarioUtils.loadScenario( config );
+            Controler controler = new Controler( scenario );
+
+            FrozenTastes.configure( controler );
 
             controler.run();
 
