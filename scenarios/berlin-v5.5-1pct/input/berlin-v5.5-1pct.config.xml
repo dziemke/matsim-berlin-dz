@@ -1,29 +1,5 @@
-Skip to content
-		Why GitHub?
-		Enterprise
-		Explore
-		Marketplace
-		Pricing
-		Search
-
-		Sign in
-		Sign up
-		matsim-scenarios
-		/
-		matsim-berlin
-		11620
-		Code Issues 6 Pull requests 1 Projects 0 Security Insights
-		Join GitHub today
-		GitHub is home to over 40 million developers working together to host and review code, manage projects, and build software together.
-
-		matsim-berlin/scenarios/berlin-v5.5-1pct/input/berlin-v5.5-1pct.config.xml
-		@ikaddoura ikaddoura adjust to new input plans file
-		6ec42bb on Nov 7, 2019
-		@vsp-gleich@ikaddoura
-		157 lines (156 sloc)  7.05 KB
-
-		<?xml version="1.0" encoding="UTF-8"?>
-		<!DOCTYPE config SYSTEM "http://www.matsim.org/files/dtd/config_v2.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE config SYSTEM "http://www.matsim.org/files/dtd/config_v2.dtd">
 <config>
 	<module name="TimeAllocationMutator" >
 		<param name="mutationRange" value="7200.0" />
