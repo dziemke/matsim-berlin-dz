@@ -6,6 +6,14 @@
 		<activity type="leisure">
 		</activity>
 	</facility>
+	<facility id="10" x="4597517.126959191" y="5823176.614956086">
+		<activity type="leisure">
+		</activity>
+	</facility>
+	<facility id="4499" x="4603160.415223704" y="5820747.264687532">
+		<activity type="leisure">
+		</activity>
+	</facility>
 	<facility id="4855" x="4601069.317978636" y="5823414.0190927">
 		<activity type="shopping">
 		</activity>
