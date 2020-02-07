@@ -29,7 +29,6 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
@@ -40,8 +39,6 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 

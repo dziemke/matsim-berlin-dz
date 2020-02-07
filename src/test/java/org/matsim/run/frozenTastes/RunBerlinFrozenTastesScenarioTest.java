@@ -90,8 +90,11 @@ public class RunBerlinFrozenTastesScenarioTest {
     public final void modeInteractionTest () {
         try {
             Config config = prepareConfig();
-            config.facilities().setInputFile("twoFacilities.xml");
+            config.plans().setInputFile("test-Person.xml");
 //            config.controler().setLastIteration(2);
+            config.planCalcScore().addActivityParams(
+                    new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
+            );
 
             Scenario scenario = ScenarioUtils.loadScenario( config );
             Controler controler = new Controler( scenario );
@@ -120,7 +123,7 @@ public class RunBerlinFrozenTastesScenarioTest {
         config.controler().setWriteEventsUntilIteration(1);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
-        config.transit().setUseTransit(false);
+        config.transit().setUseTransit(true);
 
         // berlin stuff
         {

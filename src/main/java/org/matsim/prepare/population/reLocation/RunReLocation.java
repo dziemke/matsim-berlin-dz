@@ -26,6 +26,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
+import static org.matsim.core.router.TripStructureUtils.StageActivityHandling.ExcludeStageActivities;
+
 public class RunReLocation {
 
     private static final Logger log = Logger.getLogger(RunReLocation.class);
@@ -42,11 +44,12 @@ public class RunReLocation {
         if (args.length == 0 || args[0].equals("")) {
 
 //            planFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-1pct/input/berlin-v5.4-1pct.plans.xml.gz";
-            planFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-10pct.plans_uncalibrated.xml.gz";
-            shapeFile = "https://svn.vsp.tu-berlin.de/repos/shared-svn/studies/countries/de/open_berlin_scenario/activity-relocation/shapeFile/grid_5000_intersect_Id.shp";
-            facilitiesFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/original-data/activity-relocation/osm/combinedFacilities_BB_BE.xml.gz";
-            outputPlans = "D:/Arbeit/Berlin/ReLocation/drt/10/PlansWithNewLocations5000.xml.gz";
-            logFile = "D:/Arbeit/Berlin/ReLocation/drt/10/log5000";
+//            planFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-10pct.plans_uncalibrated.xml.gz";
+            planFile = "D:/Bachelor/randomReLocation/preparingPlans/2000.xml.gz";
+            shapeFile = "D:/Arbeit/Berlin/ReLocation/activity-relocation/shapeFile/grid_10000_intersect_Id.shp";
+            facilitiesFile = "D:/Arbeit/Berlin/ReLocation/combinedFacilities_BB_BE.xml.gz";
+            outputPlans = "D:/Bachelor/randomReLocation/preparingPlans/test.xml";
+            logFile = "D:/Bachelor/randomReLocation/preparingPlans/log2000";
 
         } else {
 
@@ -71,7 +74,8 @@ public class RunReLocation {
         matsimFacilitiesReader.readFile(facilitiesFile);
 
         PopulationReader populationReader = new PopulationReader(scenario);
-        populationReader.readURL(new URL(planFile));
+//        populationReader.readURL(new URL(planFile));
+        populationReader.readFile(planFile);
 
         Map<String, Geometry> allZones = readShapeFile(shapeFile);
 
@@ -82,14 +86,14 @@ public class RunReLocation {
 
         Population population = scenario.getPopulation();
 
-        Map<String, List<Coord>> oldLeisureActivities = oldActivitiesToZone(population, allZones, "leisure");
-        Map<String, List<Coord>> oldShoppingActivities = oldActivitiesToZone(population, allZones, "shopping");
+//        Map<String, List<Coord>> oldLeisureActivities = oldActivitiesToZone(population, allZones, "leisure");
+//        Map<String, List<Coord>> oldShoppingActivities = oldActivitiesToZone(population, allZones, "shopping");
 
-        logWarnings(allZones, newLeisureFacilities, oldLeisureActivities, "leisure");
-        logWarnings(allZones, newShoppingFacilities, oldShoppingActivities, "shopping");
+//        logWarnings(allZones, newLeisureFacilities, oldLeisureActivities, "leisure");
+//        logWarnings(allZones, newShoppingFacilities, oldShoppingActivities, "shopping");
 
-        oldLeisureActivities.clear();
-        oldShoppingActivities.clear();
+//        oldLeisureActivities.clear();
+//        oldShoppingActivities.clear();
 
         createNewPopulation(outputPlans, allZones, newLeisureFacilities, newShoppingFacilities, population);
 
@@ -114,42 +118,71 @@ public class RunReLocation {
 
         for (Person person : population.getPersons().values()) {
 
-            Plan newPlan = populationFactory.createPlan();
-            Plan plan = person.getSelectedPlan();
+            List<Plan> removePlans = new ArrayList<>();
+            Plan addPlan = null;
+            for (Plan plan : person.getPlans()) {
 
-            boolean stratlocation = false;
-
-            for(TripStructureUtils.Trip trip : TripStructureUtils.getTrips(plan)) {
-                if(!stratlocation) {
-                    stratlocation = true;
-                    newPlan.addActivity(trip.getOriginActivity());
+                boolean selectedPlan = false;
+                if (person.getSelectedPlan().equals(plan)) {
+                    selectedPlan = true;
                 }
-                MainModeIdentifierImpl mainModeIdentifier = new MainModeIdentifierImpl();
-                newPlan.addLeg(populationFactory.createLeg(mainModeIdentifier.identifyMainMode(trip.getLegsOnly())));
-                newPlan.addActivity(trip.getDestinationActivity());
-                if (trip.getDestinationActivity().getType().contains("shopping")) {
-                    String act = inDistrict(allZones, trip.getDestinationActivity().getCoord());
-                    if (!(act.equals("noZone"))) {
-                        List<Coord> coords = newShoppingFacilities.get(act);
-                        if (coords != null) {
-                            trip.getDestinationActivity().setCoord(coords.get(random.nextInt(coords.size())));
-                            trip.getDestinationActivity().setLinkId(null);
+                List<Activity> activities = TripStructureUtils.getActivities(plan, ExcludeStageActivities);
+                List<String> legs = new ArrayList<>();
+                Iterator<PlanElement> iterator = plan.getPlanElements().listIterator();
+                boolean inTrip = false;
+                while (iterator.hasNext()) {
+                    PlanElement element = iterator.next();
+                    if (element instanceof Activity) {
+                        if (!activities.contains(element)) {
+                            continue;
                         }
+                        inTrip = true;
                     }
-                } else if (trip.getDestinationActivity().getType().contains("leisure")) {
-                    String act = inDistrict(allZones, trip.getDestinationActivity().getCoord());
-                    if (!(act.equals("noZone"))) {
-                        List<Coord> coords = newLeisureFacilities.get(act);
-                        if (coords != null) {
-                            trip.getDestinationActivity().setCoord(coords.get(random.nextInt(coords.size())));
-                            trip.getDestinationActivity().setLinkId(null);
+                    if (element instanceof Leg) {
+                        if (inTrip) {
+                            legs.add(TripStructureUtils.getRoutingMode((Leg) element));
+                            inTrip = false;
                         }
                     }
                 }
+                int i = 0;
+                if (activities.size() - 1 != legs.size()) {
+                    throw new RuntimeException("not the correct amount of activities or legs");
+                }
+                Plan newPlan = populationFactory.createPlan();
+                for (Activity activity : activities) {
+                    if (activity.getType().contains("shopping")) {
+                        String act = inDistrict(allZones, activity.getCoord());
+                        if (!(act.equals("noZone"))) {
+                            List<Coord> coords = newShoppingFacilities.get(act);
+                            if (coords != null) {
+                                activity.setCoord(coords.get(random.nextInt(coords.size())));
+                                activity.setLinkId(null);
+                            }
+                        }
+                    } else if (activity.getType().contains("leisure")) {
+                        String act = inDistrict(allZones, activity.getCoord());
+                        if (!(act.equals("noZone"))) {
+                            List<Coord> coords = newLeisureFacilities.get(act);
+                            if (coords != null) {
+                                activity.setCoord(coords.get(random.nextInt(coords.size())));
+                                activity.setLinkId(null);
+                            }
+                        }
+                    }
+                    newPlan.addActivity(activity);
+                    if (i < legs.size()) {
+                        newPlan.addLeg(populationFactory.createLeg(legs.get(i++)));
+                    }
 
+                }
+                removePlans.add(plan);
+                if (selectedPlan) {
+                    addPlan = newPlan;
+                }
             }
-            person.removePlan(plan);
-            person.addPlan(newPlan);
+            person.getPlans().removeAll(removePlans);
+            person.addPlan(addPlan);
         }
         System.out.println("Writing");
         new PopulationWriter(population).write(outputPlans);
@@ -163,7 +196,7 @@ public class RunReLocation {
      */
 
     public static Map<String, Geometry> readShapeFile(String shapeFile) throws MalformedURLException {
-        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(new URL(shapeFile));
+        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFile);
         Map<String, Geometry> districts = new HashMap<>();
 
         for (SimpleFeature feature : features) {

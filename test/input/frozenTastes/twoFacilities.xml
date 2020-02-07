@@ -18,4 +18,10 @@
 		<activity type="shopping">
 		</activity>
 	</facility>
+	<facility id="588633373" x="4659376.339359377" y="5829351.129783085">
+		<activity type="leisure">
+		</activity>
+		<activity type="shopping">
+		</activity>
+	</facility>
 </facilities>
