@@ -86,14 +86,14 @@ public class RunReLocation {
 
         Population population = scenario.getPopulation();
 
-//        Map<String, List<Coord>> oldLeisureActivities = oldActivitiesToZone(population, allZones, "leisure");
-//        Map<String, List<Coord>> oldShoppingActivities = oldActivitiesToZone(population, allZones, "shopping");
+        Map<String, List<Coord>> oldLeisureActivities = oldActivitiesToZone(population, allZones, "leisure");
+        Map<String, List<Coord>> oldShoppingActivities = oldActivitiesToZone(population, allZones, "shopping");
 
-//        logWarnings(allZones, newLeisureFacilities, oldLeisureActivities, "leisure");
-//        logWarnings(allZones, newShoppingFacilities, oldShoppingActivities, "shopping");
+        logWarnings(allZones, newLeisureFacilities, oldLeisureActivities, "leisure");
+        logWarnings(allZones, newShoppingFacilities, oldShoppingActivities, "shopping");
 
-//        oldLeisureActivities.clear();
-//        oldShoppingActivities.clear();
+        oldLeisureActivities.clear();
+        oldShoppingActivities.clear();
 
         createNewPopulation(outputPlans, allZones, newLeisureFacilities, newShoppingFacilities, population);
 
@@ -183,6 +183,7 @@ public class RunReLocation {
             }
             person.getPlans().removeAll(removePlans);
             person.addPlan(addPlan);
+            person.setSelectedPlan(addPlan);
         }
         System.out.println("Writing");
         new PopulationWriter(population).write(outputPlans);
