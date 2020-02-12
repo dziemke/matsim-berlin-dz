@@ -16,9 +16,13 @@ import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup;
+import org.matsim.drtSpeedUp.DrtSpeedUpModule;
+import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 
 import java.util.Arrays;
 
@@ -37,6 +41,10 @@ public class RunBerlinFrozenTastesQuickFixScore {
         if ( args.length==0 ) {
             args = new String[] {"scenarios/berlin-v5.5-1pct/input/berlin-v5.5-1pct.config.xml"}  ;
         }
+        args = new String[3];
+        args[0] = "test/input/frozenTastes/berlin-drt-v5.5-1pct.config_FrozenTastes0.xml";
+        args[1] = "0";
+        args[2] = "0";
         Config config = prepareConfig( args ) ;
         Scenario scenario = prepareScenario( config ) ;
         for( Person person : scenario.getPopulation().getPersons().values() ){
@@ -93,7 +101,8 @@ public class RunBerlinFrozenTastesQuickFixScore {
 
         String[] typedArgs = Arrays.copyOfRange( args, 3, args.length );
 
-        final Config config = ConfigUtils.loadConfig( args[ 0 ], customModules ); // I need this to set the context
+        Config config = ConfigUtils.loadConfig( args[ 0 ], customModules ); // I need this to set the context
+        config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
 
@@ -131,7 +140,7 @@ public class RunBerlinFrozenTastesQuickFixScore {
         // frozenTastes
         scalFac = scalFac.substring(0, scalFac.length() - 1);
         flexTyp = flexTyp.substring(0, flexTyp.length() - 1);
-        config.facilities().setInputFile("./facilitiesOpenBerlin.xml.gz");
+        config.facilities().setInputFile("twoFacilities.xml");
 //        config.facilities().setInputFile("D:/Arbeit/Berlin/ReLocation/facilitiesOpenBerlin.xml.gz");
         for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
             if (strategy.getSubpopulation().equals("person")) {
@@ -145,7 +154,7 @@ public class RunBerlinFrozenTastesQuickFixScore {
         dccg.setFlexibleTypes(flexTyp);
         dccg.setTravelTimeApproximationLevel( FrozenTastesConfigGroup.ApproximationLevel.localRouting );
         dccg.setRandomSeed( 2 );
-        dccg.setDestinationSamplePercent( 1. );
+        dccg.setDestinationSamplePercent( 100. );
 
         config.controler().setLastIteration( 1 );
         config.controler().setWriteEventsUntilIteration( 1 );
@@ -169,6 +178,8 @@ public class RunBerlinFrozenTastesQuickFixScore {
         config.planCalcScore().addActivityParams( new PlanCalcScoreConfigGroup.ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
 
         ConfigUtils.applyCommandline( config, typedArgs ) ;
+
+
 
         return config ;
     }
