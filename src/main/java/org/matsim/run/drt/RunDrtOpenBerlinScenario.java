@@ -40,17 +40,17 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.population.routes.RouteFactories;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.run.RunBerlinScenario;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import org.matsim.run.frozenTastes.RunBerlinFrozenTastesQuickFixScore;
 
 /**
  * This class starts a simulation run with DRT.
@@ -87,7 +87,7 @@ public final class RunDrtOpenBerlinScenario {
 	
 	public static Controler prepareControler( Scenario scenario ) {
 
-		Controler controler = RunBerlinFrozenTastesQuickFixScore.prepareControler( scenario ) ;
+		Controler controler = RunBerlinScenario.prepareControler( scenario ) ;
 		
 		// drt + dvrp module
 		controler.addOverridingModule(new MultiModeDrtModule());
@@ -103,6 +103,7 @@ public final class RunDrtOpenBerlinScenario {
 				// with its own implementation
 				// So we need our own main mode indentifier which replaces both :-(
 				bind(MainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifier.class);
+				bind(AnalysisMainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifier.class);
 			}
 		});
 
@@ -115,7 +116,7 @@ public final class RunDrtOpenBerlinScenario {
 	
 	public static Scenario prepareScenario( Config config ) {
 
-		Scenario scenario = RunBerlinFrozenTastesQuickFixScore.prepareScenario( config );
+		Scenario scenario = RunBerlinScenario.prepareScenario( config );
 
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
 		routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
@@ -141,7 +142,7 @@ public final class RunDrtOpenBerlinScenario {
 	}
 	
 	public static Config prepareConfig( String [] args, ConfigGroup... customModules) {
-		ConfigGroup[] customModulesToAdd = new ConfigGroup[]{new DvrpConfigGroup(), new MultiModeDrtConfigGroup(), new DrtFaresConfigGroup(), new SwissRailRaptorConfigGroup(), };
+		ConfigGroup[] customModulesToAdd = new ConfigGroup[]{new DvrpConfigGroup(), new MultiModeDrtConfigGroup(), new DrtFaresConfigGroup(), new SwissRailRaptorConfigGroup() };
 		ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 		
 		int counter = 0;
@@ -155,7 +156,7 @@ public final class RunDrtOpenBerlinScenario {
 			counter++;
 		}
 
-		Config config = RunBerlinFrozenTastesQuickFixScore.prepareConfig( args, new DvrpConfigGroup(), new MultiModeDrtConfigGroup(), new DrtFaresConfigGroup(), new SwissRailRaptorConfigGroup()  ) ;
+		Config config = RunBerlinScenario.prepareConfig( args, customModulesAll ) ;
 		
 		// switch off pt vehicle simulation: very slow, because also switches from Raptor to the old pt router
 //		config.transit().setUsingTransitInMobsim(false);
