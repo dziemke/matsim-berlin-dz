@@ -28,12 +28,12 @@ public class SmartDRTFareComputationTest {
                 "--config:controler.outputDirectory", utils.getOutputDirectory()};
 
         Config config = RunDrtOpenBerlinScenario.prepareConfig(args);
-        ConfigUtils.addOrGetModule(config,SmartDrtFareConfigGroup.class);
+        ConfigUtils.addOrGetModule(config, SmartDrtFareConfigGroup.class);
 
 
-        Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario( config ) ;
+        Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
 
-        Controler controler = RunDrtOpenBerlinScenario.prepareControler( scenario ) ;
+        Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
         controler.addOverridingModule(new SmartDRTFareModule());
         controler.run();
     }
