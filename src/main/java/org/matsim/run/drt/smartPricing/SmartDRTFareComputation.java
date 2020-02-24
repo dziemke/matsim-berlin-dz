@@ -19,12 +19,12 @@
 
 package org.matsim.run.drt.smartPricing;
 
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonMoneyEvent;
@@ -36,6 +36,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.Facility;
 
 import java.io.BufferedWriter;
@@ -59,7 +60,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     @Inject
     private Scenario scenario;
     @Inject
-    private SwissRailRaptor swissRailRaptor;
+    private TripRouter tripRouter;
     @Inject
     private SmartDrtFareConfigGroup smartDrtFareConfigGroup;
 
@@ -93,6 +94,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
     @Override
     public void handleEvent(PersonArrivalEvent event) {
+
         if (this.personId2drtTripInfoCollector.containsKey(event.getPersonId())) {
             var drtTrip = this.personId2drtTripInfoCollector.get(event.getPersonId());
             if (event.getLegMode().equals(smartDrtFareConfigGroup.getDrtMode())) {
@@ -115,23 +117,14 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
                 if (!estimatePtTrip.hasPtTravelTime) {
                     estimatePtTrip.setHasPtTravelTime(true);
-                    var legs = swissRailRaptor.calcRoute(estimatePtTrip.getDepartureFacility(), estimatePtTrip.getArrivalFacility(), estimatePtTrip.getDepartureTime(), scenario.getPopulation().getPersons().get(event.getPersonId()));
-                    if (legs != null) {
-                        var ptTravelTime = legs.stream().mapToDouble(Leg::getTravelTime).sum();
-                        estimatePtTrip.setPtTravelTime(ptTravelTime);
-                        logger.info("Calculate a new PtTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + ", result of ptTravelTime is " + ptTravelTime + ".");
-                    } else {
-                        double ptTravelTime = -1.;
-                        estimatePtTrip.setPtTravelTime(ptTravelTime);
-                        logger.info("Calculate a new PtTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + ", result of ptTravelTime is none of ptRoute is found.");
-                    }
-                    try {
-                        writeLine(event, drtTrip, estimatePtTrip, true);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                } else {
+                    var planElements = tripRouter.calcRoute(TransportMode.pt, estimatePtTrip.getDepartureFacility(), estimatePtTrip.getArrivalFacility(), estimatePtTrip.getDepartureTime(), scenario.getPopulation().getPersons().get(event.getPersonId()));
+                    var ptTravelTime = planElements.stream().filter(planElement -> (planElement instanceof Leg)).mapToDouble(planElement -> ((Leg) planElement).getTravelTime()).sum();
+                    logger.info("Calculate a new PtTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + ", result of ptTravelTime is " + ptTravelTime + ".");
+                try {
+                    writeLine(event, drtTrip, estimatePtTrip, true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } }else {
                     logger.info("ptTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + " already has been calculated with a ptTravelTime " + estimatePtTrip.getPtTravelTime() + ".");
                     try {
                         writeLine(event, drtTrip, estimatePtTrip, false);
@@ -143,7 +136,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                 double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideTime();
                 double ratioThreshold = this.smartDrtFareConfigGroup.getRatioThreshold();
 
-                if (ratio < 0 || ratio > ratioThreshold) {
+                if ( ratio > ratioThreshold) {
                     // no DRT penalty
                     try {
                         writeBoolean(false);
