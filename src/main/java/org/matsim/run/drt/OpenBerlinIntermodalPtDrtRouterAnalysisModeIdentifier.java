@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.matsim.analysis.TransportPlanningMainModeIdentifier;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
@@ -36,15 +37,20 @@ import com.google.inject.Inject;
 /**
  * Based on {@link TransportPlanningMainModeIdentifier}
  * 
+ * 
+ * ModeStatsControlerListener takes modes from scoreConfig.getAllModes() and ignores everything else. So this class is currently useless.
+ * 
  * @author nagel / gleich
  *
  */
-public final class OpenBerlinIntermodalPtDrtRouterModeIdentifier implements AnalysisMainModeIdentifier {
+public final class OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier implements AnalysisMainModeIdentifier {
 	private final List<String> modeHierarchy = new ArrayList<>() ;
 	private final List<String> drtModes;
+	private static final Logger log = Logger.getLogger(OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier.class);
+	public static final String ANALYSIS_MAIN_MODE_PT_WITH_DRT_USED_FOR_ACCESS_OR_EGRESS = "pt_w_drt_used";
 
 	@Inject
-	public OpenBerlinIntermodalPtDrtRouterModeIdentifier() {
+	public OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier() {
 		drtModes = Arrays.asList(TransportMode.drt, "drt2", "drt_teleportation");
 		
 		modeHierarchy.add( TransportMode.walk ) ;
@@ -65,6 +71,7 @@ public final class OpenBerlinIntermodalPtDrtRouterModeIdentifier implements Anal
 
 	@Override public String identifyMainMode( List<? extends PlanElement> planElements ) {
 		int mainModeIndex = -1 ;
+		List<String> modesFound = new ArrayList<>();
 		for ( PlanElement pe : planElements ) {
 			int index;
 			String mode;
@@ -79,14 +86,15 @@ public final class OpenBerlinIntermodalPtDrtRouterModeIdentifier implements Anal
 				continue;
 			}
 			if (mode.equals(TransportMode.transit_walk)) {
-				mode = TransportMode.pt;
+				mode = TransportMode.walk;
 			} else {
 				for (String drtMode: drtModes) {
 					if (mode.equals(drtMode + "_fallback")) {// transit_walk / drt_walk / ... to be replaced by _fallback soon
-						mode = drtMode;
+						mode = TransportMode.walk;
 					}
 				}
 			}
+			modesFound.add(mode);
 			index = modeHierarchy.indexOf( mode ) ;
 			if ( index < 0 ) {
 				throw new RuntimeException("unknown mode=" + mode ) ;
@@ -98,6 +106,32 @@ public final class OpenBerlinIntermodalPtDrtRouterModeIdentifier implements Anal
 		if (mainModeIndex == -1) {
 			throw new RuntimeException("no main mode found for trip " + planElements.toString() ) ;
 		}
-		return modeHierarchy.get( mainModeIndex ) ;
+		
+		String mainMode = modeHierarchy.get( mainModeIndex ) ;
+		// differentiate pt monomodal/intermodal
+		if (mainMode.equals(TransportMode.pt)) {
+			boolean isDrtPt = false;
+			for (String modeFound: modesFound) {
+				if (modeFound.equals(TransportMode.pt)) {
+					continue;
+				} else if (modeFound.equals(TransportMode.walk)) {
+					continue;
+				} else if (drtModes.contains(modeFound)) {
+					isDrtPt = true;
+				} else {
+					log.error("unknown intermodal pt trip: " + planElements.toString());
+					throw new RuntimeException("unknown intermodal pt trip");
+				}
+			}
+			
+			if (isDrtPt) {
+				return OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier.ANALYSIS_MAIN_MODE_PT_WITH_DRT_USED_FOR_ACCESS_OR_EGRESS;
+			} else {
+				return TransportMode.pt;
+			}
+			
+		} else {
+			return mainMode;
+		}
 	}
 }

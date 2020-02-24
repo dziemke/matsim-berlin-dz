@@ -7,8 +7,8 @@
 	<module name="controler" >
 		<param name="lastIteration" value="500" />
 		<param name="overwriteFiles" value="failIfDirectoryExists" />
-		<param name="runId" value="berlin-drt-v5.5-10pct" />
-		<param name="outputDirectory" value="./scenarios/berlin-v5.5-10pct/output-berlin-drt-v5.5-10pct" />
+		<param name="runId" value="berlin-v5.5-1pct" />
+		<param name="outputDirectory" value="./scenarios/berlin-v5.5-1pct/output-berlin-v5.5-1pct" />
 		<param name="writeEventsInterval" value="50" />
 		<param name="writePlansInterval" value="50" />
 	</module>
@@ -21,7 +21,7 @@
 		<param name="inputNetworkFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz" />
 	</module>
 	<module name="plans" >
-		<param name="inputPlansFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-10pct.plans.xml.gz" />
+		<param name="inputPlansFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans_uncalibrated.xml.gz" />
 		<param name="removingUnnecessaryPlanAttributes" value="true" />
 	</module>
 	<module name="vehicles" >
@@ -44,14 +44,19 @@
 			<param name="mode" value="walk" />
 			<param name="teleportedModeSpeed" value="1.0555556" />
 		</parameterset>
+		<parameterset type="teleportedModeParameters" >
+			<param name="beelineDistanceFactor" value="1.3" />
+			<param name="mode" value="non_network_walk" />
+			<param name="teleportedModeSpeed" value="0.8333333333333333" />
+		</parameterset>
 	</module>
 	<module name="qsim" >
 		<param name="endTime" value="36:00:00" />
-		<param name="flowCapacityFactor" value="0.1" />
+		<param name="flowCapacityFactor" value="0.015" />
 		<param name="mainMode" value="car,freight" />
 		<param name="numberOfThreads" value="8" />
 		<param name="startTime" value="00:00:00" />
-		<param name="storageCapacityFactor" value="0.1" />
+		<param name="storageCapacityFactor" value="0.015" />
 		<param name="stuckTime" value="30.0" />
 		<param name="trafficDynamics" value="kinematicWaves" />
 		<param name="vehiclesSource" value="modeVehicleTypesFromVehiclesData" />
@@ -65,12 +70,12 @@
 			<param name="weight" value="0.85" />
 		</parameterset>
 		<parameterset type="strategysettings" >
-			<param name="strategyName" value="ReRoute" />
+			<param name="strategyName" value="RandomSingleTripReRoute" />
 			<param name="subpopulation" value="person" />
 			<param name="weight" value="0.05" />
 		</parameterset>
 		<parameterset type="strategysettings" >
-			<param name="strategyName" value="SubtourModeChoice" />
+			<param name="strategyName" value="ChangeSingleTripModeAndRoute" />
 			<param name="subpopulation" value="person" />
 			<param name="weight" value="0.05" />
 		</parameterset>
@@ -85,7 +90,7 @@
 			<param name="weight" value="0.95" />
 		</parameterset>
 		<parameterset type="strategysettings" >
-			<param name="strategyName" value="ReRoute" />
+			<param name="strategyName" value="RandomSingleTripReRoute" />
 			<param name="subpopulation" value="freight" />
 			<param name="weight" value="0.05" />
 		</parameterset>
@@ -108,7 +113,7 @@
 		<param name="fractionOfIterationsToStartScoreMSA" value="1.0" />
 		<parameterset type="scoringParameters" >
 			<parameterset type="modeParams" >
-				<param name="constant" value="-0.0" />
+				<param name="constant" value="-0.45" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="0.0" />
 				<param name="mode" value="car" />
 				<param name="monetaryDistanceRate" value="-0.0002" />
@@ -140,6 +145,10 @@
 			<parameterset type="modeParams" >
 				<param name="marginalUtilityOfTraveling_util_hr" value="0.0" />
 				<param name="mode" value="walk" />
+			</parameterset>
+			<parameterset type="modeParams" >
+				<param name="marginalUtilityOfTraveling_util_hr" value="0.0" />
+				<param name="mode" value="transit_walk" />
 			</parameterset>
 		</parameterset>
 	</module>
