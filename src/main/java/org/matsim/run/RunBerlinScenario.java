@@ -172,8 +172,6 @@ public final class RunBerlinScenario {
 		
 		String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
-		final Config config = ConfigUtils.loadConfig( args[ 0 ], customModules ); // I need this to set the context
-		
 		ConfigGroup[] customModulesToAdd = null ;
 		if ( additionalInformation== RunDrtOpenBerlinScenario.AdditionalInformation.acceptUnknownParamsBerlinConfig ) {
 			customModulesToAdd = new ConfigGroup[]{ new BerlinExperimentalConfigGroup(true) };
