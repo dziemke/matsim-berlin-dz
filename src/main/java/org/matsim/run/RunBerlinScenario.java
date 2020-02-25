@@ -23,8 +23,10 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.matsim.analysis.RunPersonTripAnalysis;
@@ -34,6 +36,9 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.DrtConfigGroup.OperationalScheme;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
@@ -53,6 +58,8 @@ import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 import org.matsim.run.singleTripStrategies.ChangeSingleTripModeAndRoute;
 import org.matsim.run.singleTripStrategies.RandomSingleTripReRoute;
+
+import com.google.common.base.Verify;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.ConstraintModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
@@ -242,14 +249,31 @@ public final class RunBerlinScenario {
 		 * and we have no route to run the ConstraintModule.TRANSIT_WALK on.
 		 */
 		dmcConfig.setTripConstraints(
-				Arrays.asList("KeepRide", ConstraintModule.SHAPE_FILE));
+				Arrays.asList("KeepRide"));
 		
-		// drt constraint via drt
-//		ShapeFileConstraintConfigGroup shpFileConstraintDrtCfg = dmcConfig.getShapeFileConstraintConfigGroup();
-//		shpFileConstraintDrtCfg.setConstrainedModesAsString(TransportMode.drt);
-//		shpFileConstraintDrtCfg.setRequirement(ch.ethz.matsim.discrete_mode_choice.components.constraints.ShapeFileConstraint.Requirement.BOTH);
-//		shpFileConstraintDrtCfg.setPath("drt service area + buffer shp file");
+		// drt constraint to drt service area, would be nicer to access drt router instead and handle pt also (obviously not using a shp but a long wait/travel time constraint)
+		
+		// configure for drt, but only if present
+		ConfigGroup potentialDrtConfigs = config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
+		if (potentialDrtConfigs != null) {
+			MultiModeDrtConfigGroup drtConfigs = (MultiModeDrtConfigGroup) potentialDrtConfigs;
+			// TODO: multiple constrained modes would need multiple of these config groups and multiple constrain modules, not sure how to do this
+			Verify.verify(drtConfigs.getModalElements().size() == 1);
+			for (DrtConfigGroup drtConfig: drtConfigs.getModalElements()) {
+				if (drtConfig.getOperationalScheme().equals(OperationalScheme.serviceAreaBased)) {
+					dmcConfig.setTripConstraints(
+							// overwrite to add drt shape file constraint
+							Arrays.asList("KeepRide", ConstraintModule.SHAPE_FILE));
+					ShapeFileConstraintConfigGroup shpFileConstraintDrtCfg = dmcConfig.getShapeFileConstraintConfigGroup();
+					shpFileConstraintDrtCfg.setConstrainedModesAsString(drtConfig.getMode());
+					shpFileConstraintDrtCfg.setRequirement(ch.ethz.matsim.discrete_mode_choice.components.constraints.ShapeFileConstraint.Requirement.BOTH);
+					// TODO: This is wrong, because it prohibits walking into the service area. But we cannot add a buffer here, only use a different shp file with buffer already added
+					shpFileConstraintDrtCfg.setPath(drtConfig.getDrtServiceAreaShapeFile());
+				}
+			}
+		}
 
+		// TODO: Is this beneficial (should it 
 		dmcConfig.setCachedModes(Arrays.asList("car", "pt", "bicycle", "walk", "freight", "ride"));
 
 		ConfigUtils.applyCommandline( config, typedArgs ) ;
