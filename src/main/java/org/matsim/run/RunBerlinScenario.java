@@ -228,7 +228,7 @@ public final class RunBerlinScenario {
 		}
 		config.planCalcScore().addActivityParams( new ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
 
-		DiscreteModeChoiceConfigurator.configureAsSubtourModeChoiceReplacement(config);
+//		DiscreteModeChoiceConfigurator.configureAsSubtourModeChoiceReplacement(config);
 		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 
 		dmcConfig.setModeAvailability("BerlinModeAvailability");
