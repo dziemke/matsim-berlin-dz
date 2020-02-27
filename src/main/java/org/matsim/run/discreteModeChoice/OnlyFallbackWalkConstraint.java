@@ -31,9 +31,8 @@ public class OnlyFallbackWalkConstraint extends AbstractTripConstraint {
 				// Go through all plan elments
 				for (PlanElement element : ((RoutedTripCandidate) candidate).getRoutedPlanElements()) {
 					if (element instanceof Leg) {
-						if (((Leg) element).getMode().equals(candidate.getMode())) {
-							// If we find at least one leg of the routing mode, we're good
-							// -> will not work with upper level routing modes which do not exist as leg mode (e.g. PtRoutingModeWrapper)!
+						if (!((Leg) element).getMode().equals(TransportMode.walk) && !((Leg) element).getMode().equals(TransportMode.non_network_walk)) {
+							// If we find at least one leg that is not walk or non_network_walk (access/egress to walk network if walk is routed on the network), we're good
 							return true;
 						}
 					}
