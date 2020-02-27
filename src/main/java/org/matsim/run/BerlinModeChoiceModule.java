@@ -26,5 +26,6 @@ public class BerlinModeChoiceModule extends AbstractDiscreteModeChoiceExtension 
 	protected void installExtension() {
 		bindModeAvailability("BerlinModeAvailability").to(BerlinModeAvailability.class);
 		bindTripConstraintFactory("KeepRide").to(KeepRideConstraint.Factory.class);
+		bindTripConstraintFactory("OnlyFallbackWalkConstraint").to(OnlyFallbackWalkConstraint.Factory.class);
 	}
 }

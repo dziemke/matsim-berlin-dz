@@ -129,8 +129,7 @@ public final class RunBerlinScenario {
 				bind(AnalysisMainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifier.class);
 				
 				addPlanStrategyBinding("RandomSingleTripReRoute").toProvider(RandomSingleTripReRoute.class);
-				addPlanStrategyBinding("ChangeSingleTripModeAndRoute").toProvider(ChangeSingleTripModeAndRoute.class);
-
+				
 				bind(RaptorIntermodalAccessEgress.class).to(BerlinRaptorIntermodalAccessEgress.class);
 			}
 		} );
@@ -226,7 +225,6 @@ public final class RunBerlinScenario {
 		}
 		config.planCalcScore().addActivityParams( new ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
 
-//		DiscreteModeChoiceConfigurator.configureAsSubtourModeChoiceReplacement(config);
 		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 		
 		// Use tour based model, so we can enforce vehicle continuity as if it was SubTourModeChoice
@@ -251,29 +249,7 @@ public final class RunBerlinScenario {
 		 * and we have no route to run the ConstraintModule.TRANSIT_WALK on.
 		 */
 		dmcConfig.setTripConstraints(
-				Arrays.asList("KeepRide", ConstraintModule.TRANSIT_WALK));
-		
-		// drt constraint to drt service area, would be nicer to access drt router instead and handle pt also (obviously not using a shp but a long wait/travel time constraint)
-		// configure ConstraintModule.SHAPE_FILE for drt, but only if present
-		ConfigGroup potentialDrtConfigs = config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
-		if (potentialDrtConfigs != null) {
-			MultiModeDrtConfigGroup drtConfigs = (MultiModeDrtConfigGroup) potentialDrtConfigs;
-			// TODO: multiple constrained modes would need multiple of these config groups and multiple constrain modules, not sure how to do this
-			Verify.verify(drtConfigs.getModalElements().size() == 1);
-			for (DrtConfigGroup drtConfig: drtConfigs.getModalElements()) {
-				if (drtConfig.getOperationalScheme().equals(OperationalScheme.serviceAreaBased)) {
-					// add drt shape file constraint
-					Collection<String> tripConstraints = dmcConfig.getTripConstraints();
-					tripConstraints.add(ConstraintModule.SHAPE_FILE);
-					dmcConfig.setTripConstraints(tripConstraints);
-					ShapeFileConstraintConfigGroup shpFileConstraintDrtCfg = dmcConfig.getShapeFileConstraintConfigGroup();
-					shpFileConstraintDrtCfg.setConstrainedModesAsString(drtConfig.getMode());
-					shpFileConstraintDrtCfg.setRequirement(ch.ethz.matsim.discrete_mode_choice.components.constraints.ShapeFileConstraint.Requirement.BOTH);
-					// TODO: This is wrong, because it prohibits walking into the service area. But we cannot add a buffer here, only use a different shp file with buffer already added
-					shpFileConstraintDrtCfg.setPath(drtConfig.getDrtServiceAreaShapeFile());
-				}
-			}
-		}
+				Arrays.asList("KeepRide", "OnlyFallbackWalkConstraint"));
 		
 		// Consider the whole plans as one tour. We cannot use TourFinderModule.ACTIVITY_BASED because it takes only one activity type and we have multiple home activity types. 
 		dmcConfig.setTourFinder(TourFinderModule.PLAN_BASED);
@@ -286,8 +262,8 @@ public final class RunBerlinScenario {
 
 		// "Trips tested with the modes listed here will be cached for each combination of trip and agent during one replanning pass."
 		// just insert all modes
-		// TODO. add drt if necessary
-		dmcConfig.setCachedModes(Arrays.asList("car", "pt", "bicycle", "walk", "freight", "ride"));
+		// Actually we need all routing modes, not all leg modes. But currently both sets of modes are identical, so we can use this short cut (to add e.g.)
+		dmcConfig.setCachedModes(config.planCalcScore().getAllModes());
 
 		ConfigUtils.applyCommandline( config, typedArgs ) ;
 
