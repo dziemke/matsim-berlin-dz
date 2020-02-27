@@ -1,4 +1,4 @@
-package org.matsim.run;
+package org.matsim.run.discreteModeChoice;
 
 import java.util.Collection;
 import java.util.List;

@@ -17,15 +17,27 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.run;
+package org.matsim.run.discreteModeChoice;
 
-import ch.ethz.matsim.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-public class BerlinModeChoiceModule extends AbstractDiscreteModeChoiceExtension {
+import org.matsim.api.core.v01.population.Person;
+
+import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import ch.ethz.matsim.discrete_mode_choice.model.mode_availability.ModeAvailability;
+
+public class BerlinModeAvailability implements ModeAvailability {
+
 	@Override
-	protected void installExtension() {
-		bindModeAvailability("BerlinModeAvailability").to(BerlinModeAvailability.class);
-		bindTripConstraintFactory("KeepRide").to(KeepRideConstraint.Factory.class);
-		bindTripConstraintFactory("OnlyFallbackWalkConstraint").to(OnlyFallbackWalkConstraint.Factory.class);
+	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
+		if (person.getId().toString().contains("freight")) {
+			return Collections.singleton("freight");
+		}
+
+		return Arrays.asList("car", "pt", "bicycle", "walk", "ride");
 	}
+
 }
