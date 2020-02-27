@@ -23,10 +23,9 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.matsim.analysis.RunPersonTripAnalysis;
@@ -62,15 +61,14 @@ import org.matsim.run.singleTripStrategies.RandomSingleTripReRoute;
 import com.google.common.base.Verify;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.ConstraintModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
 import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.EstimatorModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.FilterModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
 import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.TourFinderModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.ShapeFileConstraintConfigGroup;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.TourLengthFilterConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
@@ -230,10 +228,14 @@ public final class RunBerlinScenario {
 
 //		DiscreteModeChoiceConfigurator.configureAsSubtourModeChoiceReplacement(config);
 		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
-
-		dmcConfig.setModeAvailability("BerlinModeAvailability");
 		
-		// this only counts and restricts the number of trips to be considered a tour
+		// Use tour based model, so we can enforce vehicle continuity as if it was SubTourModeChoice
+		dmcConfig.setModelType(ModelType.Tour);
+		
+		// Use logit model to try out also 2nd best modes
+		dmcConfig.setSelector(SelectorModule.MULTINOMIAL_LOGIT);
+		
+		// this only counts and restricts the number of trips to be considered a tour, not sure what it does with too long tours
 //		dmcConfig.setTourFilters(Arrays.asList(FilterModule.TOUR_LENGTH));
 		
 //		TourLengthFilterConfigGroup tourLengthFilterDrtCfg = dmcConfig.getTourLengthFilterConfigGroup();
@@ -249,11 +251,10 @@ public final class RunBerlinScenario {
 		 * and we have no route to run the ConstraintModule.TRANSIT_WALK on.
 		 */
 		dmcConfig.setTripConstraints(
-				Arrays.asList("KeepRide"));
+				Arrays.asList("KeepRide", ConstraintModule.TRANSIT_WALK));
 		
 		// drt constraint to drt service area, would be nicer to access drt router instead and handle pt also (obviously not using a shp but a long wait/travel time constraint)
-		
-		// configure for drt, but only if present
+		// configure ConstraintModule.SHAPE_FILE for drt, but only if present
 		ConfigGroup potentialDrtConfigs = config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
 		if (potentialDrtConfigs != null) {
 			MultiModeDrtConfigGroup drtConfigs = (MultiModeDrtConfigGroup) potentialDrtConfigs;
@@ -261,9 +262,10 @@ public final class RunBerlinScenario {
 			Verify.verify(drtConfigs.getModalElements().size() == 1);
 			for (DrtConfigGroup drtConfig: drtConfigs.getModalElements()) {
 				if (drtConfig.getOperationalScheme().equals(OperationalScheme.serviceAreaBased)) {
-					dmcConfig.setTripConstraints(
-							// overwrite to add drt shape file constraint
-							Arrays.asList("KeepRide", ConstraintModule.SHAPE_FILE));
+					// add drt shape file constraint
+					Collection<String> tripConstraints = dmcConfig.getTripConstraints();
+					tripConstraints.add(ConstraintModule.SHAPE_FILE);
+					dmcConfig.setTripConstraints(tripConstraints);
 					ShapeFileConstraintConfigGroup shpFileConstraintDrtCfg = dmcConfig.getShapeFileConstraintConfigGroup();
 					shpFileConstraintDrtCfg.setConstrainedModesAsString(drtConfig.getMode());
 					shpFileConstraintDrtCfg.setRequirement(ch.ethz.matsim.discrete_mode_choice.components.constraints.ShapeFileConstraint.Requirement.BOTH);
@@ -272,8 +274,19 @@ public final class RunBerlinScenario {
 				}
 			}
 		}
+		
+		// Consider the whole plans as one tour. We cannot use TourFinderModule.ACTIVITY_BASED because it takes only one activity type and we have multiple home activity types. 
+		dmcConfig.setTourFinder(TourFinderModule.PLAN_BASED);
+		
+		// TODO: The estimator is most probably not aware of drt fares, intermodal fare compensations etc.
+		dmcConfig.setTourEstimator(EstimatorModule.MATSIM_DAY_SCORING);
+		
+		// Special configuration for Berlin scenario (exclude freight agents)
+		dmcConfig.setModeAvailability("BerlinModeAvailability"); // needs adaption for additional modes (e.g. drt)
 
-		// TODO: Is this beneficial (should it 
+		// "Trips tested with the modes listed here will be cached for each combination of trip and agent during one replanning pass."
+		// just insert all modes
+		// TODO. add drt if necessary
 		dmcConfig.setCachedModes(Arrays.asList("car", "pt", "bicycle", "walk", "freight", "ride"));
 
 		ConfigUtils.applyCommandline( config, typedArgs ) ;
