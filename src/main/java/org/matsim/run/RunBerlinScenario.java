@@ -56,10 +56,7 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.run.discreteModeChoice.BerlinModeChoiceModule;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
-import org.matsim.run.singleTripStrategies.ChangeSingleTripModeAndRoute;
 import org.matsim.run.singleTripStrategies.RandomSingleTripReRoute;
-
-import com.google.common.base.Verify;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.ConstraintModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
@@ -69,7 +66,6 @@ import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
 import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.TourFinderModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.ShapeFileConstraintConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
@@ -240,14 +236,12 @@ public final class RunBerlinScenario {
 //		TourLengthFilterConfigGroup tourLengthFilterDrtCfg = dmcConfig.getTourLengthFilterConfigGroup();
 //		tourLengthFilterDrtCfg.setMaximumLength(maximumLength);
 
+		// ConstraintModule.FROM_TRIP_BASED necessary???
 		dmcConfig.setTourConstraints(
-				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
+				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.SUBTOUR_MODE, ConstraintModule.FROM_TRIP_BASED));
 		
 		/*
-		 * in theory ConstraintModule.TRANSIT_WALK goes here, but this works only in
-		 * DiscreteModeChoiceConfigurator.configureAsModeChoiceInTheLoop(config); because right with
-		 * configureAsSubtourModeChoiceReplacement there is no utility estimator and therefore the router is not called
-		 * and we have no route to run the ConstraintModule.TRANSIT_WALK on.
+		 * OnlyFallbackWalkConstraint is similar to ConstraintModule.TRANSIT_WALK, but more general. Maybe not really necessary with the estimator in use.
 		 */
 		dmcConfig.setTripConstraints(
 				Arrays.asList("KeepRide", "OnlyFallbackWalkConstraint"));
@@ -259,8 +253,8 @@ public final class RunBerlinScenario {
 		dmcConfig.setTourEstimator(EstimatorModule.MATSIM_DAY_SCORING);
 		
 		// Special configuration for Berlin scenario (exclude freight agents)
-		dmcConfig.setModeAvailability("BerlinModeAvailability"); // needs adaption for additional modes (e.g. drt)
-
+		dmcConfig.setModeAvailability("BerlinModeAvailability");
+		
 		// "Trips tested with the modes listed here will be cached for each combination of trip and agent during one replanning pass."
 		// just insert all modes
 		// Actually we need all routing modes, not all leg modes. But currently both sets of modes are identical, so we can use this short cut (to add e.g.)

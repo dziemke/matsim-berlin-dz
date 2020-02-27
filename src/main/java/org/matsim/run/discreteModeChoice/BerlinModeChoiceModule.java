@@ -19,6 +19,11 @@
 
 package org.matsim.run.discreteModeChoice;
 
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+
+import com.google.inject.Provides;
+
+import ch.ethz.matsim.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import ch.ethz.matsim.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
 
 public class BerlinModeChoiceModule extends AbstractDiscreteModeChoiceExtension {
@@ -27,5 +32,10 @@ public class BerlinModeChoiceModule extends AbstractDiscreteModeChoiceExtension 
 		bindModeAvailability("BerlinModeAvailability").to(BerlinModeAvailability.class);
 		bindTripConstraintFactory("KeepRide").to(KeepRideConstraint.Factory.class);
 		bindTripConstraintFactory("OnlyFallbackWalkConstraint").to(OnlyFallbackWalkConstraint.Factory.class);
+	}
+	
+	@Provides
+	public ModeAvailability provideBerlinModeAvailability(PlanCalcScoreConfigGroup planCalcScoreConfig) {
+		return new BerlinModeAvailability(planCalcScoreConfig);
 	}
 }
