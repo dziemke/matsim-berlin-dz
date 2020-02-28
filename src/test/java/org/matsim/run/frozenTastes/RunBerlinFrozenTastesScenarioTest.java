@@ -65,7 +65,7 @@ public class RunBerlinFrozenTastesScenarioTest {
     public final void calPlanWithMarginalUtilityOfDistance_mOrMonetaryDistanceCostRate() {
         try {
             Config config = prepareConfig();
-            config.plans().setInputFile("test-Person.xml");
+            config.plans().setInputFile("test-Person2.xml");
             config.planCalcScore().addModeParams(new PlanCalcScoreConfigGroup.ModeParams("car").setMarginalUtilityOfDistance(-6));
             config.planCalcScore().addActivityParams(
                     new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
@@ -78,7 +78,7 @@ public class RunBerlinFrozenTastesScenarioTest {
 
             controler.run();
 
-            log.info("Done with backwardPathTest");
+            log.info("Done with calPlanWithMarginalUtilityOfDistance_mOrMonetaryDistanceCostRate");
             log.info("");
 
         } catch (Exception ee) {
