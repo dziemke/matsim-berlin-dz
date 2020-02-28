@@ -43,10 +43,7 @@ public class RunDrtOpenBerlinScenarioWithDrtSpeedUp {
 		if ( args.length==0 ) {
 			args = new String[] {"scenarios/berlin-v5.5-1pct/input/drt/berlin-drt-v5.5-1pct.config.xml"}  ;
 		}
-		args = new String[3];
-		args[0] = "test/input/frozenTastes/berlin-drt-v5.5-1pct.config_FrozenTastes0.xml";
-		args[1] = "0";
-		args[2] = "0";
+
 		Config config = RunDrtOpenBerlinScenario.prepareConfig( args , new DrtSpeedUpConfigGroup() ) ;
 		DrtSpeedUpModule.adjustConfig(config);
 

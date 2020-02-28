@@ -1,10 +1,9 @@
-package org.matsim.run.frozenTastes;
+package org.matsim.prepare.population.reLocation;
 
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import org.apache.log4j.Logger;
+import com.google.inject.Module;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Person;
+//import org.matsim.contrib.locationchoice.frozenepsilons.BestReplyLocationChoicePlanStrategy;
 import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastes;
 import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastesConfigGroup;
 import org.matsim.core.config.Config;
@@ -14,94 +13,50 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
-import org.matsim.core.controler.AbstractModule;
-import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.gbl.Gbl;
+import org.matsim.core.controler.*;
+import org.matsim.core.controler.corelisteners.ControlerDefaultCoreListenersModule;
+import org.matsim.core.replanning.StrategyManager;
+import org.matsim.core.scenario.ScenarioByInstanceModule;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup;
-import org.matsim.drtSpeedUp.DrtSpeedUpModule;
-import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 
 import java.util.Arrays;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
-public class RunBerlinFrozenTastesQuickFixScore {
-
-    private static final Logger log = Logger.getLogger(RunBerlinFrozenTastesQuickFixScore.class);
+public class FrozenTastesStrategy {
 
     public static void main(String[] args) {
 
-        for (String arg : args) {
-            log.info( arg );
-        }
+        Config config = ConfigUtils.loadConfig("test/input/frozenTastes/berlin-drt-v5.5-1pct.config_FrozenTastes0.xml");
+        Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        if ( args.length==0 ) {
-            args = new String[] {"scenarios/berlin-v5.5-1pct/input/berlin-v5.5-1pct.config.xml"}  ;
-        }
-        args = new String[3];
-        args[0] = "test/input/frozenTastes/berlin-drt-v5.5-1pct.config_FrozenTastes0.xml";
-        args[1] = "0";
-        args[2] = "0";
-        Config config = prepareConfig( args ) ;
-        Scenario scenario = prepareScenario( config ) ;
-        for( Person person : scenario.getPopulation().getPersons().values() ){
-            person.getPlans().removeIf( (plan) -> plan!=person.getSelectedPlan() ) ;
-        }
-        Controler controler = prepareControler( scenario ) ;
-        controler.run() ;
-
-    }
-
-    public static Controler prepareControler( Scenario scenario ) {
-        Gbl.assertNotNull(scenario);
-        final Controler controler = new Controler( scenario );
-
-        FrozenTastes.configure( controler );
-
-        if (controler.getConfig().transit().isUsingTransitInMobsim()) {
-            // use the sbb pt raptor router
-            controler.addOverridingModule( new AbstractModule() {
-                @Override
-                public void install() {
-                    install( new SwissRailRaptorModule() );
-                }
-            } );
-        } else {
-            log.warn("Public transit will be teleported and not simulated in the mobsim! "
-                    + "This will have a significant effect on pt-related parameters (travel times, modal split, and so on). "
-                    + "Should only be used for testing or car-focused studies with a fixed modal split.  ");
-        }
-
-        // use the (congested) car travel time for the teleported ride mode
-        controler.addOverridingModule( new AbstractModule() {
+        Module module = new AbstractModule() {
             @Override
             public void install() {
-                addTravelTimeBinding( TransportMode.ride ).to( networkTravelTime() );
-                addTravelDisutilityFactoryBinding( TransportMode.ride ).to( carTravelDisutilityFactoryKey() );
+//                install(new StrategyManagerModule());
+                install( new NewControlerModule() );
+                install( new ControlerDefaultCoreListenersModule() );
+                install( new ControlerDefaultsModule() );
+                install( new ScenarioByInstanceModule( scenario ) ) ;
             }
-        } );
+        };
+        System.out.println("Start doing stuff 1");
+        com.google.inject.Injector incejtor = Injector.createInjector(config, module);
+        System.out.println("Start doing stuff 2");
+        StrategyManager strategyManager = incejtor.getInstance(StrategyManager.class);
+        config = null;
+        config = getConfig(args);
+        System.out.println("Start doing stuff 3");
+//        strategyManager.addStrategy(new BestReplyLocationChoicePlanStrategy(), "Person", 1);
+        strategyManager.run(scenario.getPopulation(), () -> 0);
 
-        return controler;
     }
 
-    public static Scenario prepareScenario(Config config) {
-        Gbl.assertNotNull( config );
-
-        final Scenario scenario = ScenarioUtils.loadScenario( config );
-
-        return scenario;
-    }
-
-    public static Config prepareConfig(String[] args, ConfigGroup... customModules) {
-
+    private static Config getConfig(String[] args, ConfigGroup... customModules) {
         OutputDirectoryLogging.catchLogEntries();
 
-        String[] typedArgs = Arrays.copyOfRange( args, 3, args.length );
-
-        Config config = ConfigUtils.loadConfig( args[ 0 ], customModules ); // I need this to set the context
+        String[] typedArgs = Arrays.copyOfRange( args, 0, args.length );
+        Config config = ConfigUtils.loadConfig("test/input/frozenTastes/berlin-drt-v5.5-1pct.config_FrozenTastes0.xml", customModules ); // I need this to set the context
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
@@ -134,13 +89,13 @@ public class RunBerlinFrozenTastesQuickFixScore {
             // frozenTastes
             flexTyp = flexTyp + "leisure_" + ii + ".0,";
             flexTyp = flexTyp + "shopping_" + ii + ".0,";
-            scalFac = scalFac + args[1] + "," + args[2] + ",";
+            scalFac = scalFac + "0" + "," + "0" + ",";
         }
 
         // frozenTastes
         scalFac = scalFac.substring(0, scalFac.length() - 1);
         flexTyp = flexTyp.substring(0, flexTyp.length() - 1);
-        config.facilities().setInputFile("facilitiesOpenBerlin.xml.gz");
+        config.facilities().setInputFile("twoFacilities.xml");
 //        config.facilities().setInputFile("D:/Arbeit/Berlin/ReLocation/facilitiesOpenBerlin.xml.gz");
         for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
             if (strategy.getSubpopulation().equals("person")) {
@@ -148,7 +103,8 @@ public class RunBerlinFrozenTastesQuickFixScore {
             }
         }
         config.strategy().addStrategySettings( new StrategyConfigGroup.StrategySettings( ).setStrategyName( FrozenTastes.LOCATION_CHOICE_PLAN_STRATEGY ).setWeight( 1 ).setDisableAfter( 10 ).setSubpopulation("person") );
-        FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule( config, FrozenTastesConfigGroup.class );;
+        FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule( config, FrozenTastesConfigGroup.class );
+
         dccg.setEpsilonScaleFactors(scalFac);
         dccg.setAlgorithm( FrozenTastesConfigGroup.Algotype.bestResponse );
         dccg.setFlexibleTypes(flexTyp);
@@ -177,9 +133,10 @@ public class RunBerlinFrozenTastesQuickFixScore {
 
         config.planCalcScore().addActivityParams( new PlanCalcScoreConfigGroup.ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
 
-        ConfigUtils.applyCommandline( config, typedArgs ) ;
+        config.transit().setUseTransit(false);
 
-        return config ;
+        ConfigUtils.applyCommandline( config, typedArgs ) ;
+        return config;
     }
 
 }

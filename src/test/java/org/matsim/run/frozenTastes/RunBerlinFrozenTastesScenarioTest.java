@@ -90,7 +90,7 @@ public class RunBerlinFrozenTastesScenarioTest {
     public final void modeInteractionTest () {
         try {
             Config config = prepareConfig();
-            config.plans().setInputFile("test-Person.xml");
+            config.plans().setInputFile("test-Person2.xml");
 //            config.controler().setLastIteration(2);
             config.planCalcScore().addActivityParams(
                     new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
@@ -115,7 +115,8 @@ public class RunBerlinFrozenTastesScenarioTest {
 
         Config config = ConfigUtils.loadConfig("test/input/frozenTastes/berlin-v5.5-1pct.config.xml");
         config.controler().setOutputDirectory(utils.getOutputDirectory());
-        config.facilities().setInputFile("twoFacilities.xml");
+        config.facilities().setInputFile("twoFacilities2" +
+                ".xml");
 
         config.controler().setWriteEventsInterval(1);
         config.controler().setWritePlansInterval(1);
@@ -159,6 +160,9 @@ public class RunBerlinFrozenTastesScenarioTest {
             dccg.setTravelTimeApproximationLevel(FrozenTastesConfigGroup.ApproximationLevel.localRouting);
             dccg.setRandomSeed(2);
             dccg.setDestinationSamplePercent(100.);
+            dccg.setpkValuesFile("D:/Arbeit/Code/matsim-berlin/test/input/frozenTastes/personsKValues.xml");
+            dccg.setfkValuesFile("D:/Arbeit/Code/matsim-berlin/test/input/frozenTastes/facilitiesKValues.xml");
+            dccg.setMaxEpsFile("D:/Arbeit/Code/matsim-berlin/test/input/frozenTastes/personsMaxDCScoreUnscaled.xml");
         }
 
         return config ;
