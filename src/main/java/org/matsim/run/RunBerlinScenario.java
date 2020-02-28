@@ -263,13 +263,14 @@ public final class RunBerlinScenario {
 		dmcConfig.setModeAvailability("BerlinModeAvailability");
 		
 		BerlinExperimentalConfigGroup berlinExperimentalConfigGroup = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
-		Collection<String> availableModes = new HashSet<>();
-		availableModes.addAll(config.planCalcScore().getAllModes());
-		availableModes.remove(OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier.ANALYSIS_MAIN_MODE_PT_WITH_DRT_USED_FOR_ACCESS_OR_EGRESS); // in planCalcScore().getAllModes(), but not a routing mode
+		Collection<String> dmcAvailablePersonModes = new HashSet<>();
+		dmcAvailablePersonModes.addAll(config.planCalcScore().getAllModes());
+		dmcAvailablePersonModes.remove("freight");
+		dmcAvailablePersonModes.remove(OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier.ANALYSIS_MAIN_MODE_PT_WITH_DRT_USED_FOR_ACCESS_OR_EGRESS); // in planCalcScore().getAllModes(), but not a routing mode
 		
 		//if not set otherwise, set it here
 		if (berlinExperimentalConfigGroup.getDMCAvailablePersonModes().size() == 0) {
-			berlinExperimentalConfigGroup.setDMCAvailablePersonModes(availableModes);
+			berlinExperimentalConfigGroup.setDMCAvailablePersonModes(dmcAvailablePersonModes);
 		}
 		
 		// "Trips tested with the modes listed here will be cached for each combination of trip and agent during one replanning pass."
