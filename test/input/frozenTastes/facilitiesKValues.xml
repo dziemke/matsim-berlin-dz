@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE objectAttributes SYSTEM "http://matsim.org/files/dtd/objectattributes_v1.dtd">
+
+<objectAttributes>
+	<object id="2076">
+		<attribute name="k" class="java.lang.Double">0.49682259343089075</attribute>
+	</object>
+	<object id="10">
+		<attribute name="k" class="java.lang.Double">0.9858769332362016</attribute>
+	</object>
+	<object id="4499">
+		<attribute name="k" class="java.lang.Double">0.8571240443456863</attribute>
+	</object>
+	<object id="4855">
+		<attribute name="k" class="java.lang.Double">0.9874208338984266</attribute>
+	</object>
+	<object id="588633373">
+		<attribute name="k" class="java.lang.Double">0.2281579303734177</attribute>
+	</object>
+</objectAttributes>

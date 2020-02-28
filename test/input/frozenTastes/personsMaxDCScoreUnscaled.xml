@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE objectAttributes SYSTEM "http://matsim.org/files/dtd/objectattributes_v1.dtd">
+
+<objectAttributes>
+	<object id="388573001">
+		<attribute name="leisure" class="java.lang.Double">0.6175913565660144</attribute>
+		<attribute name="shopping" class="java.lang.Double">2.220830059537735</attribute>
+	</object>
+	<object id="100002901">
+		<attribute name="leisure" class="java.lang.Double">5.426020781579961</attribute>
+		<attribute name="shopping" class="java.lang.Double">1.7629723168237434</attribute>
+	</object>
+</objectAttributes>
