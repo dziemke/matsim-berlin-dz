@@ -66,6 +66,7 @@ import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
 import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.TourFinderModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.TourLengthFilterConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
@@ -231,10 +232,11 @@ public final class RunBerlinScenario {
 		dmcConfig.setSelector(SelectorModule.MULTINOMIAL_LOGIT);
 		
 		// this only counts and restricts the number of trips to be considered a tour, not sure what it does with too long tours
-//		dmcConfig.setTourFilters(Arrays.asList(FilterModule.TOUR_LENGTH));
+		// TODO: Temporarily use this until updated release of DMC is available to avoid arithmetic overflow issue
+		dmcConfig.setTourFilters(Arrays.asList(FilterModule.TOUR_LENGTH));
 		
-//		TourLengthFilterConfigGroup tourLengthFilterDrtCfg = dmcConfig.getTourLengthFilterConfigGroup();
-//		tourLengthFilterDrtCfg.setMaximumLength(maximumLength);
+		TourLengthFilterConfigGroup tourLengthFilterDrtCfg = dmcConfig.getTourLengthFilterConfigGroup();
+		tourLengthFilterDrtCfg.setMaximumLength(11); // 6^11 smaller than int max, 6^12 larger
 
 		// ConstraintModule.FROM_TRIP_BASED necessary???
 		dmcConfig.setTourConstraints(
