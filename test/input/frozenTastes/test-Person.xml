@@ -21,7 +21,7 @@
 					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
 				</attributes>
 			</activity>
-			<leg mode="drt">
+			<leg mode="car">
 			</leg>
 			<activity type="leisure" link="20239" end_time="11:12:29" >
 				<attributes>
@@ -29,7 +29,7 @@
 					<attribute name="zoneId" class="java.lang.String">903051022</attribute>
 				</attributes>
 			</activity>
-			<leg mode="drt">
+			<leg mode="car">
 			</leg>
 			<activity type="shopping" link="128196" end_time="15:12:29" >
 				<attributes>
@@ -37,7 +37,7 @@
 					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
 				</attributes>
 			</activity>
-			<leg mode="drt">
+			<leg mode="car">
 			</leg>
 			<activity type="shopping" link="128179" end_time="18:12:29" >
 				<attributes>
@@ -45,7 +45,7 @@
 					<attribute name="zoneId" class="java.lang.String">911020515</attribute>
 				</attributes>
 			</activity>
-			<leg mode="drt">
+			<leg mode="car">
 			</leg>
 			<activity type="home" link="128196" >
 				<attributes>

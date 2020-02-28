@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE facilities SYSTEM "http://www.matsim.org/files/dtd/facilities_v1.dtd">
+
+<facilities>
+	<facility id="10" linkId="33546" x="4597517.126959191" y="5823176.614956086">
+		<activity type="leisure">
+		</activity>		<attributes>
+		<attribute name="k" class="java.lang.Double">0.9858769332362016</attribute>
+	</attributes>
+
+	</facility>
+	<facility id="2076" linkId="91528" x="4601069.317978636" y="5823414.0190927">
+		<activity type="leisure">
+		</activity>		<attributes>
+		<attribute name="k" class="java.lang.Double">0.49682259343089075</attribute>
+	</attributes>
+
+	</facility>
+	<facility id="4499" linkId="126450" x="4603160.415223704" y="5820747.264687532">
+		<activity type="leisure">
+		</activity>		<attributes>
+		<attribute name="k" class="java.lang.Double">0.8571240443456863</attribute>
+	</attributes>
+
+	</facility>
+	<facility id="4855" linkId="91528" x="4601069.317978636" y="5823414.0190927">
+		<activity type="shopping">
+		</activity>		<attributes>
+		<attribute name="k" class="java.lang.Double">0.9874208338984266</attribute>
+	</attributes>
+
+	</facility>
+	<facility id="588633373" linkId="26084" x="4659376.339359377" y="5829351.129783085">
+		<activity type="leisure">
+		</activity>
+		<activity type="shopping">
+		</activity>		<attributes>
+		<attribute name="k" class="java.lang.Double">0.2281579303734177</attribute>
+	</attributes>
+
+	</facility>
+</facilities>
