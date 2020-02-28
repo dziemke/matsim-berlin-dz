@@ -24,6 +24,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 
@@ -54,6 +55,7 @@ import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.run.discreteModeChoice.BerlinModeChoiceModule;
+import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 import org.matsim.run.singleTripStrategies.RandomSingleTripReRoute;
@@ -66,6 +68,7 @@ import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
 import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.TourFinderModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.ModeAvailabilityConfigGroup;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.TourLengthFilterConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
@@ -256,6 +259,16 @@ public final class RunBerlinScenario {
 		
 		// Special configuration for Berlin scenario (exclude freight agents)
 		dmcConfig.setModeAvailability("BerlinModeAvailability");
+		
+		BerlinExperimentalConfigGroup berlinExperimentalConfigGroup = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
+		Collection<String> availableModes = new HashSet<>();
+		availableModes.addAll(config.planCalcScore().getAllModes());
+		availableModes.remove(OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier.ANALYSIS_MAIN_MODE_PT_WITH_DRT_USED_FOR_ACCESS_OR_EGRESS); // in planCalcScore().getAllModes(), but not a routing mode
+		
+		//if not set otherwise, set it here
+		if (berlinExperimentalConfigGroup.getDMCAvailablePersonModes().size() == 0) {
+			berlinExperimentalConfigGroup.setDMCAvailablePersonModes(availableModes);
+		}
 		
 		// "Trips tested with the modes listed here will be cached for each combination of trip and agent during one replanning pass."
 		// just insert all modes

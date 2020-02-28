@@ -19,11 +19,16 @@
 
 package org.matsim.run;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.matsim.core.config.ReflectiveConfigGroup;
+import org.matsim.core.config.ReflectiveConfigGroup.StringGetter;
+import org.matsim.core.config.ReflectiveConfigGroup.StringSetter;
 
 /**
  * 
@@ -34,6 +39,7 @@ public class BerlinExperimentalConfigGroup extends ReflectiveConfigGroup {
 	public static final String GROUP_NAME = "berlinExperimental" ;
 
     private static final String POPULATION_DOWNSAMPLE_FACTOR = "populationDownsampleFactor";
+    private static final String DMC_AVAILBLE_PERSON_MODES = "dmcAvailablePersonModes";
 	
 	public BerlinExperimentalConfigGroup() {
 		super(GROUP_NAME);
@@ -45,6 +51,7 @@ public class BerlinExperimentalConfigGroup extends ReflectiveConfigGroup {
 	
 	private double populationDownsampleFactor = 1.0;
 	private Map<String, IntermodalAccessEgressModeUtilityRandomization> intermodalAccessEgressMode2utilityRandomization = new HashMap<>();
+	private Collection<String> dmcAvailablePersonModes = new HashSet<>();
 	
     public void addIntermodalAccessEgressModeUtilityRandomization(IntermodalAccessEgressModeUtilityRandomization paramSet) {
         this.intermodalAccessEgressMode2utilityRandomization.put(paramSet.getAccessEgressMode(), paramSet);
@@ -103,6 +110,25 @@ public class BerlinExperimentalConfigGroup extends ReflectiveConfigGroup {
     public void setPopulationDownsampleFactor(double populationDownsampleFactor) {
         this.populationDownsampleFactor = populationDownsampleFactor;
     }
+    
+	public void setDMCAvailablePersonModes(Collection<String> availableModes) {
+		this.dmcAvailablePersonModes = new HashSet<>(availableModes);
+	}
+
+	public Collection<String> getDMCAvailablePersonModes() {
+		return dmcAvailablePersonModes;
+	}
+
+	@StringSetter(DMC_AVAILBLE_PERSON_MODES)
+	public void setAvailableModesAsString(String constrainedModes) {
+		this.dmcAvailablePersonModes = Arrays.asList(constrainedModes.split(",")).stream().map(String::trim)
+				.collect(Collectors.toSet());
+	}
+
+	@StringGetter(DMC_AVAILBLE_PERSON_MODES)
+	public String getAvailableModesAsString() {
+		return String.join(", ", dmcAvailablePersonModes);
+	}
 			
 }
 

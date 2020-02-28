@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.run.BerlinExperimentalConfigGroup;
 
 import com.google.inject.Inject;
 
@@ -42,10 +42,9 @@ public class BerlinModeAvailability implements ModeAvailability {
 	 * TODO: allow virtual routing modes not existent as leg mode and not in planCalcScoreConfig
 	 */
 	@Inject
-	BerlinModeAvailability (PlanCalcScoreConfigGroup planCalcScoreConfig) {
+	BerlinModeAvailability (BerlinExperimentalConfigGroup berlinExperimentalConfigGroup) {
 		personModes = new HashSet<>();
-		personModes.addAll(planCalcScoreConfig.getAllModes());
-		personModes.remove("freight");
+		personModes.addAll(berlinExperimentalConfigGroup.getDMCAvailablePersonModes());
 	}
 
 	@Override

@@ -19,7 +19,9 @@
 
 package org.matsim.run.discreteModeChoice;
 
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.run.BerlinExperimentalConfigGroup;
 
 import com.google.inject.Provides;
 
@@ -35,7 +37,8 @@ public class BerlinModeChoiceModule extends AbstractDiscreteModeChoiceExtension 
 	}
 	
 	@Provides
-	public ModeAvailability provideBerlinModeAvailability(PlanCalcScoreConfigGroup planCalcScoreConfig) {
-		return new BerlinModeAvailability(planCalcScoreConfig);
+	public ModeAvailability provideBerlinModeAvailability(Config config) {
+		BerlinExperimentalConfigGroup berlinExperimentalConfigGroup = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
+		return new BerlinModeAvailability(berlinExperimentalConfigGroup);
 	}
 }
