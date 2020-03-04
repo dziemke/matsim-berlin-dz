@@ -47,10 +47,20 @@ public class RunFrozenTastesOpenBerlinScenario {
 		}
 
 		if ( args.length==0 ) {
-			args = new String[] {"scenarios/berlin-v5.5-1pct/input/drt/xxx.config.xml"}  ;
+			args = new String[] {"scenarios/berlin-v5.5-1pct/input/berlin-v5.5-1pct.config.xml"}  ;
 		}
 
-		Config config = RunBerlinScenario.prepareConfig( args ) ;
+		String[] arg = new String[args.length-4];
+		int x = 0;
+		for (int i = 0; i < args.length; i++) {
+			if (i == 1 || i == 2 || i == 3 || i == 4) {
+				continue;
+			}
+			arg[x] = args[i];
+			x++;
+		}
+
+		Config config = RunBerlinScenario.prepareConfig( arg ) ;
 
 		// config adjustments for the locationchoice contrib:
 		// activities:
@@ -64,8 +74,9 @@ public class RunFrozenTastesOpenBerlinScenario {
 		
 		scalFac = scalFac.substring(0, scalFac.length() - 1);
 		flexTyp = flexTyp.substring(0, flexTyp.length() - 1);
-		config.facilities().setInputFile("facilitiesOpenBerlin.xml.gz");
-//        config.facilities().setInputFile("D:/Arbeit/Berlin/ReLocation/facilitiesOpenBerlin.xml.gz");
+
+		config.facilities().setInputFile(args[3]);
+
 		for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
 			if (strategy.getSubpopulation().equals("person")) {
 				strategy.setWeight(0);
@@ -78,7 +89,7 @@ public class RunFrozenTastesOpenBerlinScenario {
 		dccg.setFlexibleTypes(flexTyp);
 		dccg.setTravelTimeApproximationLevel( FrozenTastesConfigGroup.ApproximationLevel.localRouting );
 		dccg.setRandomSeed( 2 );
-		dccg.setDestinationSamplePercent( 100. );
+		dccg.setDestinationSamplePercent( Double.parseDouble(args[4]) );
 		
 		{
 			config.planCalcScore().addActivityParams(

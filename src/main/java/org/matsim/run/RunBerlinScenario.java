@@ -34,15 +34,11 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
-import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastes;
-import org.matsim.contrib.locationchoice.frozenepsilons.FrozenTastesConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
-import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -92,7 +88,7 @@ public final class RunBerlinScenario {
 		Gbl.assertNotNull(scenario);
 		
 		final Controler controler = new Controler( scenario );
-		FrozenTastes.configure( controler );
+
 		if (controler.getConfig().transit().isUseTransit()) {
 			// use the sbb pt raptor router
 			controler.addOverridingModule( new AbstractModule() {
@@ -161,7 +157,7 @@ public final class RunBerlinScenario {
 					    ConfigGroup... customModules ) {
 		OutputDirectoryLogging.catchLogEntries();
 		
-		String[] typedArgs = Arrays.copyOfRange( args, 3, args.length );
+		String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 		
 		ConfigGroup[] customModulesToAdd = null ;
 		if ( additionalInformation== RunDrtOpenBerlinScenario.AdditionalInformation.acceptUnknownParamsBerlinConfig ) {
@@ -203,57 +199,14 @@ public final class RunBerlinScenario {
 		config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
 				
 		// activities:
-		String flexTyp = "";
-		String scalFac = "";
 		for ( long ii = 600 ; ii <= 97200; ii+=600 ) {
 			config.planCalcScore().addActivityParams( new ActivityParams( "home_" + ii + ".0" ).setTypicalDuration( ii ) );
 			config.planCalcScore().addActivityParams( new ActivityParams( "work_" + ii + ".0" ).setTypicalDuration( ii ).setOpeningTime(6. * 3600. ).setClosingTime(20. * 3600. ) );
 			config.planCalcScore().addActivityParams( new ActivityParams( "leisure_" + ii + ".0" ).setTypicalDuration( ii ).setOpeningTime(9. * 3600. ).setClosingTime(27. * 3600. ) );
 			config.planCalcScore().addActivityParams( new ActivityParams( "shopping_" + ii + ".0" ).setTypicalDuration( ii ).setOpeningTime(8. * 3600. ).setClosingTime(20. * 3600. ) );
 			config.planCalcScore().addActivityParams( new ActivityParams( "other_" + ii + ".0" ).setTypicalDuration( ii ) );
-			flexTyp = flexTyp + "leisure_" + ii + ".0,";
-			flexTyp = flexTyp + "shopping_" + ii + ".0,";
-			scalFac = scalFac + args[1] + "," + args[2] + ",";
 		}
 		config.planCalcScore().addActivityParams( new ActivityParams( "freight" ).setTypicalDuration( 12.*3600. ) );
-
-		scalFac = scalFac.substring(0, scalFac.length() - 1);
-		flexTyp = flexTyp.substring(0, flexTyp.length() - 1);
-		config.facilities().setInputFile("facilitiesOpenBerlin.xml.gz");
-//        config.facilities().setInputFile("D:/Arbeit/Berlin/ReLocation/facilitiesOpenBerlin.xml.gz");
-		for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
-			if (strategy.getSubpopulation().equals("person")) {
-				strategy.setWeight(0);
-			}
-		}
-		config.strategy().addStrategySettings( new StrategyConfigGroup.StrategySettings( ).setStrategyName( FrozenTastes.LOCATION_CHOICE_PLAN_STRATEGY ).setWeight( 1 ).setDisableAfter( 10 ).setSubpopulation("person") );
-		FrozenTastesConfigGroup dccg = ConfigUtils.addOrGetModule( config, FrozenTastesConfigGroup.class );;
-		dccg.setEpsilonScaleFactors(scalFac);
-		dccg.setAlgorithm( FrozenTastesConfigGroup.Algotype.bestResponse );
-		dccg.setFlexibleTypes(flexTyp);
-		dccg.setTravelTimeApproximationLevel( FrozenTastesConfigGroup.ApproximationLevel.localRouting );
-		dccg.setRandomSeed( 2 );
-		dccg.setDestinationSamplePercent( 100. );
-
-		config.controler().setLastIteration( 1 );
-		config.controler().setWriteEventsUntilIteration( 1 );
-
-		{
-			config.planCalcScore().addActivityParams(
-					new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setScoringThisActivityAtAll(false)
-			);
-			config.planCalcScore().addActivityParams(
-					new PlanCalcScoreConfigGroup.ActivityParams("pt interaction").setScoringThisActivityAtAll(false)
-			);
-			config.planCalcScore().addActivityParams(
-					new PlanCalcScoreConfigGroup.ActivityParams("ride interaction").setScoringThisActivityAtAll(false)
-			);
-			config.planCalcScore().addActivityParams(
-					new PlanCalcScoreConfigGroup.ActivityParams("freight interaction").setScoringThisActivityAtAll(false)
-			);
-		}
-
-
 
 		ConfigUtils.applyCommandline( config, typedArgs ) ;
 
