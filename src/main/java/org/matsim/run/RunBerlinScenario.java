@@ -257,6 +257,7 @@ public final class RunBerlinScenario {
 		dmcConfig.setTourFinder(TourFinderModule.PLAN_BASED);
 		
 		// TODO: The estimator is most probably not aware of drt fares, intermodal fare compensations etc.
+		dmcConfig.setTripEstimator(EstimatorModule.MATSIM_TRIP_SCORING);
 		dmcConfig.setTourEstimator(EstimatorModule.MATSIM_DAY_SCORING);
 		
 		// Special configuration for Berlin scenario (exclude freight agents)
