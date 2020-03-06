@@ -29,10 +29,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
-import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup;
-import org.matsim.drtSpeedUp.DrtSpeedUpModule;
 import org.matsim.run.RunBerlinScenario;
-import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 
 /**
 * @author ikaddoura
@@ -105,7 +102,7 @@ public class RunFrozenTastesOpenBerlinScenario {
 					new PlanCalcScoreConfigGroup.ActivityParams("freight interaction").setScoringThisActivityAtAll(false)
 			);
 		}
-		
+
 		Scenario scenario = RunBerlinScenario.prepareScenario( config ) ;
 		for( Person person : scenario.getPopulation().getPersons().values() ){
 			person.getPlans().removeIf( (plan) -> plan!=person.getSelectedPlan() ) ;
@@ -117,7 +114,9 @@ public class RunFrozenTastesOpenBerlinScenario {
 		FrozenTastes.configure( controler );
 
 		controler.run() ;
-		
+
+		log.info("starting analyse");
+
 		RunBerlinScenario.runAnalysis(controler);
 	}
 

@@ -155,7 +155,7 @@ public final class RunBerlinScenario {
 	}
 	public static Config prepareConfig( RunDrtOpenBerlinScenario.AdditionalInformation additionalInformation, String [] args,
 					    ConfigGroup... customModules ) {
-		OutputDirectoryLogging.catchLogEntries();
+//		OutputDirectoryLogging.catchLogEntries();
 		
 		String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 		
