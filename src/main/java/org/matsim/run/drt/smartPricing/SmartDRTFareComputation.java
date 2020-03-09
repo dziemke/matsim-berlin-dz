@@ -21,7 +21,6 @@ package org.matsim.run.drt.smartPricing;
 
 import com.google.inject.Inject;
 import org.apache.log4j.Logger;
-import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -37,7 +36,8 @@ import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.router.TripRouter;
-import org.matsim.facilities.Facility;
+import org.matsim.run.drt.smartPricing.prepare.EstimatePtTrip;
+import org.matsim.run.drt.smartPricing.prepare.RealDrtTripInfo;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -47,7 +47,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author ikaddoura zmeng
@@ -64,32 +63,15 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     @Inject
     private SmartDrtFareConfigGroup smartDrtFareConfigGroup;
 
-    private BufferedWriter bw = null;
     private int currentIteration;
-    private Map<Id<Person>, DrtTripInfoCollector> personId2drtTripInfoCollector = new HashMap<>();
+    private BufferedWriter bw = null;
+    private Map<Id<Person>, RealDrtTripInfo> personId2drtTripInfoCollector = new HashMap<>();
     private Map<Id<Person>, List<EstimatePtTrip>> personId2estimatePtTrips = new HashMap<>();
 
     @Override
     public void reset(int iteration) {
         this.currentIteration = iteration;
-        if (this.smartDrtFareConfigGroup.isWriteLog() && bw == null) {
-            File file = new File(scenario.getConfig().controler().getOutputDirectory() + "smartDrtFareComputationLog.csv");
-            try {
-                bw = new BufferedWriter(new FileWriter(file));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                logger.info("begin to write smartDrtFareLog to: "+ file.getCanonicalPath());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                bw.write("it,PersonId,DepartureLink,ArrivalLink,departureTime,UnsharedDrtTime,EstimatePtTime,Calculated,penalty");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        personId2drtTripInfoCollector.clear();
     }
 
     @Override
@@ -99,6 +81,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
             var drtTrip = this.personId2drtTripInfoCollector.get(event.getPersonId());
             if (event.getLegMode().equals(smartDrtFareConfigGroup.getDrtMode())) {
                 drtTrip.setFindDrtArrivalEvent(true);
+                drtTrip.setDrtArrivalEvent(event);
             } else if (drtTrip.isLastArrivalEvent()) {
                 drtTrip.setLastArrivalEvent(event);
 
@@ -112,58 +95,32 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
                 var ptTrips = personId2estimatePtTrips.get(event.getPersonId());
 
-                EstimatePtTrip temEstimatePtTrip = new EstimatePtTrip(departureLinkID, arrivalLinkID, departureTime);
+                EstimatePtTrip temEstimatePtTrip = new EstimatePtTrip(scenario, departureLinkID, arrivalLinkID, departureTime);
                 EstimatePtTrip estimatePtTrip = temEstimatePtTrip.updatePtTrips(ptTrips);
 
-                if (!estimatePtTrip.hasPtTravelTime) {
+                if (!estimatePtTrip.isHasPtTravelTime()) {
                     estimatePtTrip.setHasPtTravelTime(true);
                     var planElements = tripRouter.calcRoute(TransportMode.pt, estimatePtTrip.getDepartureFacility(), estimatePtTrip.getArrivalFacility(), estimatePtTrip.getDepartureTime(), scenario.getPopulation().getPersons().get(event.getPersonId()));
                     var ptTravelTime = planElements.stream().filter(planElement -> (planElement instanceof Leg)).mapToDouble(planElement -> ((Leg) planElement).getTravelTime()).sum();
+                    estimatePtTrip.setPtTravelTime(ptTravelTime);
                     logger.info("Calculate a new PtTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + ", result of ptTravelTime is " + ptTravelTime + ".");
-                try {
-                    writeLine(event, drtTrip, estimatePtTrip, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } }else {
+               }else {
                     logger.info("ptTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + " already has been calculated with a ptTravelTime " + estimatePtTrip.getPtTravelTime() + ".");
-                    try {
-                        writeLine(event, drtTrip, estimatePtTrip, false);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 }
-
-                double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideTime();
+                estimatePtTrip.setRealDrtTravelTime(drtTrip.getTotalTripTime());
+                double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getTotalTripTime();
                 double ratioThreshold = this.smartDrtFareConfigGroup.getRatioThreshold();
 
                 if ( ratio > ratioThreshold) {
-                    // no DRT penalty
-                    try {
-                        writeBoolean(false);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    logger.info("person with peronId " + event.getPersonId() + " would not get a penalty for using drt: ptTravelTime = " + estimatePtTrip.getPtTravelTime() + " unsharedDrtTravelTime = " + drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideTime() + ".");
+                    logger.info("person with peronId " + event.getPersonId() + " would not get a penalty for using drt: ptTravelTime = " + estimatePtTrip.getPtTravelTime() + " unsharedDrtTravelTime = " + drtTrip.getTotalTripTime() + ".");
                 } else {
                     // pt is faster than DRT --> add fare penalty
                     //TODO optimize the penalty system
                     double penalty = this.smartDrtFareConfigGroup.getPenalty();
                     events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty));
-                    try {
-                        writeBoolean(true);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    logger.info("person with peronId " + event.getPersonId() + " would get a penalty for using drt: ptTravelTime = " + estimatePtTrip.getPtTravelTime() + " unsharedDrtTravelTime = " + drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideTime() + ".");
+                    estimatePtTrip.setPenalty(penalty);
+                    logger.info("person with peronId " + event.getPersonId() + " would get a penalty for using drt: ptTravelTime = " + estimatePtTrip.getPtTravelTime() + " unsharedDrtTravelTime = " + drtTrip.getTotalTripTime() + ".");
                 }
-                if(smartDrtFareConfigGroup.isWriteLog()) {
-                    try {
-                        bw.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
                 this.personId2drtTripInfoCollector.remove(event.getPersonId());
             }
         }
@@ -186,175 +143,38 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
         if (scenario.getPopulation().getPersons().containsKey(event.getPersonId())) {
             // store real activity_end time, regardless if this agent will use drt
             if (!event.getActType().contains("interaction")) {
-                this.personId2drtTripInfoCollector.put(event.getPersonId(), new DrtTripInfoCollector(event));
+                this.personId2drtTripInfoCollector.put(event.getPersonId(), new RealDrtTripInfo(event));
             }
         }
     }
 
+    public void writeLog(){
+        String runOutputDirectory = this.scenario.getConfig().controler().getOutputDirectory();
+        if (!runOutputDirectory.endsWith("/")) runOutputDirectory = runOutputDirectory.concat("/");
 
-    private void writeBoolean(boolean b) throws IOException {
-        if(!smartDrtFareConfigGroup.isWriteLog())
-            return;
-        bw.write("," + b);
-    }
+        String fileName = runOutputDirectory + "ITERS/it." + currentIteration + "/" + this.scenario.getConfig().controler().getRunId() + "." + currentIteration + ".info_" + this.getClass().getName() + ".csv";
+        File file = new File(fileName);
 
-    private void writeLine(PersonArrivalEvent event, DrtTripInfoCollector drtTrip, EstimatePtTrip estimatePtTrip, boolean b) throws IOException {
-        if(!smartDrtFareConfigGroup.isWriteLog())
-            return;
-        bw.newLine();
-        bw.write(this.currentIteration + "," + event.getPersonId() + "," +
-                estimatePtTrip.getDepartureLinkId() + "," +
-                estimatePtTrip.getArrivalLinkId() + "," +
-                estimatePtTrip.getDepartureTime() + "," +
-                drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideTime() + "," +
-                estimatePtTrip.getPtTravelTime());
-        writeBoolean(b);
-    }
-
-    private static class DrtTripInfoCollector {
-        private ActivityEndEvent realActivityEndEvent;
-        private DrtRequestSubmittedEvent drtRequestSubmittedEvent;
-        private PersonArrivalEvent lastArrivalEvent;
-        private boolean isDrtTrip = false;
-        private boolean findDrtArrivalEvent = false;
-
-        public DrtTripInfoCollector(ActivityEndEvent realActivityEndEvent) {
-            this.realActivityEndEvent = realActivityEndEvent;
-        }
-
-        private boolean isLastArrivalEvent() {
-            return this.isDrtTrip() && this.findDrtArrivalEvent;
-        }
-
-        public ActivityEndEvent getRealActivityEndEvent() {
-            return realActivityEndEvent;
-        }
-
-        public DrtRequestSubmittedEvent getDrtRequestSubmittedEvent() {
-            return drtRequestSubmittedEvent;
-        }
-
-        public void setDrtRequestSubmittedEvent(DrtRequestSubmittedEvent drtRequestSubmittedEvent) {
-            this.drtRequestSubmittedEvent = drtRequestSubmittedEvent;
-        }
-        public PersonArrivalEvent getLastArrivalEvent() {
-            return lastArrivalEvent;
-        }
-
-        public void setLastArrivalEvent(PersonArrivalEvent lastArrivalEvent) {
-            this.lastArrivalEvent = lastArrivalEvent;
-        }
-
-        public boolean isDrtTrip() {
-            return isDrtTrip;
-        }
-
-        public void setDrtTrip(boolean drtTrip) {
-            isDrtTrip = drtTrip;
-        }
-
-        public void setFindDrtArrivalEvent(boolean findDrtArrivalEvent) {
-            this.findDrtArrivalEvent = findDrtArrivalEvent;
-        }
-    }
-
-    class EstimatePtTrip {
-        private Id<Link> departureLinkId;
-        private Id<Link> arrivalLinkId;
-        private double departureTime;
-        private double ptTravelTime;
-        private boolean hasPtTravelTime = false;
-        private Facility departureFacility;
-        private Facility arrivalFacility;
-
-
-        public EstimatePtTrip(Id<Link> departureLinkId, Id<Link> arrivalLinkId, double departureTime) {
-            this.departureLinkId = departureLinkId;
-            this.arrivalLinkId = arrivalLinkId;
-            this.departureTime = departureTime;
-
-            departureFacility = new Facility() {
-                @Override
-                public Id<Link> getLinkId() { return departureLinkId; }
-                @Override
-                public Coord getCoord() { return scenario.getNetwork().getLinks().get(departureLinkId).getCoord(); }
-                @Override
-                public Map<String, Object> getCustomAttributes() { return null; }
-            };
-
-            arrivalFacility = new Facility() {
-                @Override
-                public Id<Link> getLinkId() { return arrivalLinkId; }
-                @Override
-                public Coord getCoord() { return scenario.getNetwork().getLinks().get(arrivalLinkId).getCoord(); }
-                @Override
-                public Map<String, Object> getCustomAttributes() { return null; }
-            };
-        }
-
-        private boolean isSameTrip(EstimatePtTrip estimatePtTrip) {
-            return (this.arrivalLinkId == estimatePtTrip.getArrivalLinkId() && this.departureLinkId == estimatePtTrip.getDepartureLinkId());
-        }
-
-        private boolean hasSameDepartureTime(EstimatePtTrip estimatePtTrip) {
-            return this.departureTime == estimatePtTrip.departureTime;
-        }
-
-        private EstimatePtTrip updatePtTrips(List<EstimatePtTrip> estimatePtTrips) throws RuntimeException {
-            var filteredTrips = estimatePtTrips.stream().filter(this::isSameTrip).collect(Collectors.toList());
-            if (filteredTrips.size() == 0) {
-                estimatePtTrips.add(this);
-                return this;
-            } else if (filteredTrips.size() == 1) {
-                if (filteredTrips.get(0).hasSameDepartureTime(this)) {
-                    return filteredTrips.get(0);
-                } else {
-                    estimatePtTrips.remove(filteredTrips.get(0));
-                    estimatePtTrips.add(this);
-                    return this;
+        try {
+            bw = new BufferedWriter(new FileWriter(file));
+            bw.write("it,PersonId,DepartureLink,ArrivalLink,departureTime,UnsharedDrtTime,EstimatePtTime,penalty");
+            for (Id<Person> personId : this.personId2estimatePtTrips.keySet()) {
+                for(EstimatePtTrip estimatePtTrip : this.personId2estimatePtTrips.get(personId)){
+                    bw.newLine();
+                    bw.write(this.currentIteration + "," +
+                            personId + "," +
+                            estimatePtTrip.getDepartureLinkId() + "," +
+                            estimatePtTrip.getArrivalLinkId() + "," +
+                            estimatePtTrip.getDepartureTime() + "," +
+                            estimatePtTrip.getRealDrtTravelTime() + "," +
+                            estimatePtTrip.getPtTravelTime() + "," +
+                            estimatePtTrip.getPenalty());
                 }
-            } else {
-                throw new RuntimeException("each agent can only store one ptTripsInfo for a trip, this agent has " + filteredTrips.size());
             }
-        }
-
-        public Id<Link> getDepartureLinkId() {
-            return departureLinkId;
-        }
-
-        public Id<Link> getArrivalLinkId() {
-            return arrivalLinkId;
-        }
-
-        public double getDepartureTime() {
-            return departureTime;
-        }
-
-        public void setDepartureTime(double departureTime) {
-            this.departureTime = departureTime;
-        }
-
-        public double getPtTravelTime() {
-            return ptTravelTime;
-        }
-
-        public void setPtTravelTime(double ptTravelTime) {
-            this.ptTravelTime = ptTravelTime;
-        }
-
-        public void setHasPtTravelTime(boolean hasPtTravelTime) {
-            this.hasPtTravelTime = hasPtTravelTime;
-        }
-
-        public Facility getDepartureFacility() {
-            return departureFacility;
-        }
-
-        public Facility getArrivalFacility() {
-            return arrivalFacility;
+            bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-
-
 }
 
