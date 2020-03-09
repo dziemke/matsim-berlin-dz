@@ -5,9 +5,11 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 import org.matsim.testcases.MatsimTestUtils;
+
 
 /**
  * @author : zmeng
@@ -25,12 +27,12 @@ public class SmartDRTFareComputationTest {
                 "--config:strategy.fractionOfIterationsToDisableInnovation", "0.8",
                 "--config:controler.runId", "testSmartDrtPriceRun",
                 "--config:controler.lastIteration", "3",
+                "--config:swissRailRaptor.useIntermodalAccessEgress","false",
                 "--config:controler.outputDirectory", utils.getOutputDirectory()};
 
         Config config = RunDrtOpenBerlinScenario.prepareConfig(args);
+
         ConfigUtils.addOrGetModule(config, SmartDrtFareConfigGroup.class);
-
-
         Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
 
         Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
