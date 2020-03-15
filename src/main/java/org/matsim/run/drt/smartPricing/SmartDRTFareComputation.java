@@ -67,11 +67,19 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     private BufferedWriter bw = null;
     private Map<Id<Person>, RealDrtTripInfo> personId2drtTripInfoCollector = new HashMap<>();
     private Map<Id<Person>, List<EstimatePtTrip>> personId2estimatePtTrips = new HashMap<>();
+    private Map<Id<Person>, List<EstimatePtTrip>> personId2estimatePtTripsCurrentIt = new HashMap<>();
+    private int newCalculatedNumOfPtTrips= 0;
+    private int numOfHasPenaltyDrtUsers = 0;
+    private int totalDrtUsers = 0;
 
     @Override
     public void reset(int iteration) {
         this.currentIteration = iteration;
         personId2drtTripInfoCollector.clear();
+        personId2estimatePtTripsCurrentIt.clear();
+        newCalculatedNumOfPtTrips = 0;
+        numOfHasPenaltyDrtUsers = 0;
+        totalDrtUsers = 0;
     }
 
     @Override
@@ -83,6 +91,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                 drtTrip.setFindDrtArrivalEvent(true);
                 drtTrip.setDrtArrivalEvent(event);
             } else if (drtTrip.isLastArrivalEvent()) {
+                totalDrtUsers++;
                 drtTrip.setLastArrivalEvent(event);
 
                 if (!this.personId2estimatePtTrips.containsKey(event.getPersonId())) {
@@ -103,24 +112,26 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                     var planElements = tripRouter.calcRoute(TransportMode.pt, estimatePtTrip.getDepartureFacility(), estimatePtTrip.getArrivalFacility(), estimatePtTrip.getDepartureTime(), scenario.getPopulation().getPersons().get(event.getPersonId()));
                     var ptTravelTime = planElements.stream().filter(planElement -> (planElement instanceof Leg)).mapToDouble(planElement -> ((Leg) planElement).getTravelTime()).sum();
                     estimatePtTrip.setPtTravelTime(ptTravelTime);
-                    logger.info("Calculate a new PtTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + ", result of ptTravelTime is " + ptTravelTime + ".");
-               }else {
-                    logger.info("ptTrip (departure time : " + estimatePtTrip.getDepartureTime() + ") for agent " + event.getPersonId() + " already has been calculated with a ptTravelTime " + estimatePtTrip.getPtTravelTime() + ".");
+                    newCalculatedNumOfPtTrips++;
                 }
                 estimatePtTrip.setRealDrtTravelTime(drtTrip.getTotalTripTime());
+                estimatePtTrip.setRealTotalTravelTime(drtTrip.getRealDrtTotalTripTime());
                 double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getTotalTripTime();
                 double ratioThreshold = this.smartDrtFareConfigGroup.getRatioThreshold();
 
-                if ( ratio > ratioThreshold) {
-                    logger.info("person with peronId " + event.getPersonId() + " would not get a penalty for using drt: ptTravelTime = " + estimatePtTrip.getPtTravelTime() + " unsharedDrtTravelTime = " + drtTrip.getTotalTripTime() + ".");
-                } else {
+                if ( ratio <= ratioThreshold) {
                     // pt is faster than DRT --> add fare penalty
                     //TODO optimize the penalty system
                     double penalty = this.smartDrtFareConfigGroup.getPenalty();
                     events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty));
                     estimatePtTrip.setPenalty(penalty);
-                    logger.info("person with peronId " + event.getPersonId() + " would get a penalty for using drt: ptTravelTime = " + estimatePtTrip.getPtTravelTime() + " unsharedDrtTravelTime = " + drtTrip.getTotalTripTime() + ".");
+                    numOfHasPenaltyDrtUsers++;
+
                 }
+                if(!this.personId2estimatePtTripsCurrentIt.containsKey(event.getPersonId())){
+                    this.personId2estimatePtTripsCurrentIt.put(event.getPersonId(),new LinkedList<>());
+                }
+                this.personId2estimatePtTripsCurrentIt.get(event.getPersonId()).add(estimatePtTrip);
                 this.personId2drtTripInfoCollector.remove(event.getPersonId());
             }
         }
@@ -148,7 +159,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
         }
     }
 
-    public void writeLog(){
+    public void writeFile(){
         String runOutputDirectory = this.scenario.getConfig().controler().getOutputDirectory();
         if (!runOutputDirectory.endsWith("/")) runOutputDirectory = runOutputDirectory.concat("/");
 
@@ -157,9 +168,9 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
         try {
             bw = new BufferedWriter(new FileWriter(file));
-            bw.write("it,PersonId,DepartureLink,ArrivalLink,departureTime,UnsharedDrtTime,EstimatePtTime,penalty");
-            for (Id<Person> personId : this.personId2estimatePtTrips.keySet()) {
-                for(EstimatePtTrip estimatePtTrip : this.personId2estimatePtTrips.get(personId)){
+            bw.write("it,PersonId,DepartureLink,ArrivalLink,departureTime,UnsharedDrtTime,wholeRealTripTime,EstimatePtTime,penalty");
+            for (Id<Person> personId : this.personId2estimatePtTripsCurrentIt.keySet()) {
+                for(EstimatePtTrip estimatePtTrip : this.personId2estimatePtTripsCurrentIt.get(personId)){
                     bw.newLine();
                     bw.write(this.currentIteration + "," +
                             personId + "," +
@@ -167,6 +178,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                             estimatePtTrip.getArrivalLinkId() + "," +
                             estimatePtTrip.getDepartureTime() + "," +
                             estimatePtTrip.getRealDrtTravelTime() + "," +
+                            estimatePtTrip.getRealDrtTotalTripTime() + "," +
                             estimatePtTrip.getPtTravelTime() + "," +
                             estimatePtTrip.getPenalty());
                 }
@@ -175,6 +187,15 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void writeLog() {
+        // num of drt Users
+        // num of new calculated pt Travel Time
+        // num of has penalty drt users
+        logger.info("num of drt users: "+totalDrtUsers+
+                " num of new calculated ptTravelTime " + newCalculatedNumOfPtTrips +
+                " num of has penalty drt users: " + numOfHasPenaltyDrtUsers);
     }
 }
 

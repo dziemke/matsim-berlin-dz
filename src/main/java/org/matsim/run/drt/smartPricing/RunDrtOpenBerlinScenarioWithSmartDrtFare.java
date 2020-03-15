@@ -3,6 +3,7 @@ package org.matsim.run.drt.smartPricing;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
@@ -32,6 +33,10 @@ public class RunDrtOpenBerlinScenarioWithSmartDrtFare {
         ConfigUtils.addOrGetModule(config, SmartDrtFareConfigGroup.class);
 
         Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
+
+        for( Person person : scenario.getPopulation().getPersons().values() ){
+            person.getPlans().removeIf( (plan) -> plan!=person.getSelectedPlan() ) ;
+        }
 
         Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
         controler.addOverridingModule(new SmartDRTFareModule());
