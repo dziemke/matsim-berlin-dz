@@ -30,23 +30,27 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     private static final String DRT_MODE = "drtMode";
     private static final String PENALTY = "penalty";
     private static final String RATIO_THRESHOLD = "ratioThreshold";
-    private static final String WRITE_LOG = "writeLog";
-    private static final String WRITE_LOG_INTERVAL = "writeLogInterval";
+    private static final String WRITE_FILE_INTERVAL = "writeFileInterval";
+    private static final String FARE_TIME_BIN_SIZE = "fareTimeBinSize";
+    private static final String COST_PER_VEHICLE_PER_SECOND = "costPerVehiclePerSecond";
+    private static final String COST_PER_VEHICLE_PER_METER = "costPerVehPerMeter";
 
     public SmartDrtFareConfigGroup() {
         super(GROUP_NAME);
     }
 
+    private double costPerVehPerMeter = 1.079*6.7 / 100 / 1000.;
+    private double costPerVehiclePerSecond = 0.5 /900. ;
+    private double fareTimeBinSize = 129601;
     private String drtMode = "drt";
     private double penalty = 10.0;
     private double ratioThreshold = 3.;
-    private boolean writeLog = true;
-    private int writeLogInterval = 2;
+    private int writeFileInterval = 2;
 
-    @StringSetter(WRITE_LOG_INTERVAL)
-    public void setWriteLogInterval(int writeLogInterval) { this.writeLogInterval = writeLogInterval; }
-    @StringGetter(WRITE_LOG_INTERVAL)
-    public int getWriteLogInterval() { return writeLogInterval; }
+    @StringSetter(WRITE_FILE_INTERVAL)
+    public void setWriteFileInterval(int writeFileInterval) { this.writeFileInterval = writeFileInterval; }
+    @StringGetter(WRITE_FILE_INTERVAL)
+    public int getWriteFileInterval() { return writeFileInterval; }
     @StringGetter(DRT_MODE)
     public String getDrtMode(){ return drtMode; }
     @StringSetter(DRT_MODE)
@@ -59,8 +63,16 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public double getRatioThreshold() { return ratioThreshold; }
     @StringSetter(RATIO_THRESHOLD)
     public void setRatioThreshold(double ratioThreshold) { this.ratioThreshold = ratioThreshold; }
-    @StringGetter(WRITE_LOG)
-    public boolean isWriteLog() { return writeLog; }
-    @StringSetter(WRITE_LOG)
-    public void setWriteLog(boolean writeLog) { this.writeLog = writeLog; }
+    @StringGetter(COST_PER_VEHICLE_PER_METER)
+    public double getCostPerVehPerMeter() { return costPerVehPerMeter; }
+    @StringSetter(COST_PER_VEHICLE_PER_METER)
+    public void setCostPerVehPerMeter(double costPerVehPerMeter) { this.costPerVehPerMeter = costPerVehPerMeter; }
+    @StringGetter(COST_PER_VEHICLE_PER_SECOND)
+    public double getCostPerVehiclePerSecond() { return costPerVehiclePerSecond; }
+    @StringSetter(COST_PER_VEHICLE_PER_SECOND)
+    public void setCostPerVehiclePerSecond(double costPerVehiclePerSecond) { this.costPerVehiclePerSecond = costPerVehiclePerSecond; }
+    @StringGetter(FARE_TIME_BIN_SIZE)
+    public double getFareTimeBinSize() { return fareTimeBinSize; }
+    @StringSetter(FARE_TIME_BIN_SIZE)
+    public void setFareTimeBinSize(double fareTimeBinSize) { this.fareTimeBinSize = fareTimeBinSize; }
 }

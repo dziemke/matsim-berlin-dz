@@ -15,7 +15,6 @@ public class RealDrtTripInfo {
     private PersonArrivalEvent lastArrivalEvent;
     private boolean isDrtTrip = false;
     private boolean findDrtArrivalEvent = false;
-    private double totalTripTime;
 
     public RealDrtTripInfo(ActivityEndEvent realActivityEndEvent) {
         this.realActivityEndEvent = realActivityEndEvent;
@@ -68,5 +67,8 @@ public class RealDrtTripInfo {
 
     public double getTotalTripTime() {
         return this.getWalkTime() + this.drtRequestSubmittedEvent.getUnsharedRideTime();
+    }
+    public double getRealDrtTotalTripTime(){
+        return this.lastArrivalEvent.getTime() - realActivityEndEvent.getTime();
     }
 }

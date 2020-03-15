@@ -28,7 +28,7 @@ public class ModalShift2DrtAnalysis {
     Population originalPop;
     Population outputPop;
 
-    public ModalShift2DrtAnalysis(String mode, Population originalPop, Population outputPop) throws Exception {
+    public ModalShift2DrtAnalysis(String mode, Population originalPop, Population outputPop){
         this.mode = mode;
         this.originalPop = originalPop;
         this.outputPop = outputPop;

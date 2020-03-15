@@ -47,6 +47,7 @@ public class EstimatePtTrip {
     private Facility arrivalFacility;
     private double penalty;
     private double realDrtTravelTime;
+    private double realDrtTotalTripTime;
 
 
     public EstimatePtTrip(Scenario scenario, Id<Link> departureLinkId, Id<Link> arrivalLinkId, double departureTime) {
@@ -170,4 +171,8 @@ public class EstimatePtTrip {
     public Facility getArrivalFacility() {
         return arrivalFacility;
     }
+
+    public void setRealTotalTravelTime(double realDrtTotalTripTime) { this.realDrtTotalTripTime = realDrtTotalTripTime; }
+
+    public double getRealDrtTotalTripTime() { return realDrtTotalTripTime; }
 }
