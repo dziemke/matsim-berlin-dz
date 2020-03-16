@@ -28,7 +28,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "smartDrtPricing";
     private static final String DRT_MODE = "drtMode";
-    private static final String PENALTY = "penalty";
+    private static final String PENALTY_FACTOR = "penalty_factor";
     private static final String RATIO_THRESHOLD = "ratioThreshold";
     private static final String WRITE_FILE_INTERVAL = "writeFileInterval";
     private static final String FARE_TIME_BIN_SIZE = "fareTimeBinSize";
@@ -43,7 +43,7 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     private double costPerVehiclePerSecond = 0.5 /900. ;
     private double fareTimeBinSize = 129601;
     private String drtMode = "drt";
-    private double penalty = 10.0;
+    private double penaltyFactor = 1;
     private double ratioThreshold = 3.;
     private int writeFileInterval = 2;
 
@@ -55,10 +55,10 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public String getDrtMode(){ return drtMode; }
     @StringSetter(DRT_MODE)
     public void setDrtMode(String drtMode) { this.drtMode = drtMode; }
-    @StringGetter(PENALTY)
-    public double getPenalty() { return penalty; }
-    @StringSetter(PENALTY)
-    public void setPenalty(double penalty) { this.penalty = penalty; }
+    @StringGetter(PENALTY_FACTOR)
+    public double getPenaltyFactor() { return penaltyFactor; }
+    @StringSetter(PENALTY_FACTOR)
+    public void setPenalty(double penaltyFactor) { this.penaltyFactor = penaltyFactor; }
     @StringGetter(RATIO_THRESHOLD)
     public double getRatioThreshold() { return ratioThreshold; }
     @StringSetter(RATIO_THRESHOLD)

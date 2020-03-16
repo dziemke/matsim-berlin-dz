@@ -8,15 +8,8 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.events.EventsUtils;
-import org.matsim.core.events.MatsimEventsReader;
-import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
-import org.matsim.run.drt.smartPricing.prepare.SmartPricingBackUpEventHandler;
 import org.matsim.testcases.MatsimTestUtils;
 
 
@@ -35,7 +28,7 @@ public class SmartDRTFareComputationTest {
                 "--config:plans.inputPlansFile", "../../../../test/input/drt/drt-test-agents.xml",
                 "--config:strategy.fractionOfIterationsToDisableInnovation", "0.8",
                 "--config:controler.runId", "testSmartDrtPriceRun",
-                "--config:controler.lastIteration", "0",
+                "--config:controler.lastIteration", "2",
                 "--config:swissRailRaptor.useIntermodalAccessEgress","false",
                 "--config:controler.outputDirectory", utils.getOutputDirectory()};
 

@@ -6,30 +6,29 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.MainModeIdentifierImpl;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author : zmeng
  * @date :
  */
 public class ModalShift2DrtAnalysis {
-    String mode;
-    Map<String, Integer> fromOtherMode2ThisMode = new HashMap<>();
-    Map<String,Integer> fromThisMode2otherMode = new HashMap<>();
+    Map<Map<String,String>,Integer> mode2mode2num = new HashMap<>();
     Population originalPop;
     Population outputPop;
 
-    public ModalShift2DrtAnalysis(String mode, Population originalPop, Population outputPop){
-        this.mode = mode;
+    public ModalShift2DrtAnalysis(Population originalPop, Population outputPop){
         this.originalPop = originalPop;
         this.outputPop = outputPop;
     }
@@ -42,8 +41,8 @@ public class ModalShift2DrtAnalysis {
             var outputPlan = outputPop.getPersons().get(personId).getSelectedPlan();
             comparePlan(originalPlan,outputPlan);
         }
-        fromOtherMode2ThisMode.forEach((a, b) -> System.out.println(a + "," +b));
-        fromThisMode2otherMode.forEach((a, b) -> System.out.println(a + "," +b));
+
+        mode2mode2num.forEach((mode2mode,num) -> System.out.println(mode2mode +" "+ num));
     }
 
     private void comparePlan(Plan originalPlan, Plan outputPlan) throws Exception {
@@ -66,23 +65,18 @@ public class ModalShift2DrtAnalysis {
         }
     }
     private void compareTrip(TripStructureUtils.Trip originalTrip, TripStructureUtils.Trip outputTrip){
-        MainModeIdentifier mainModeIdentifier = new MainModeIdentifierImpl();
+        MainModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier();
         String originalMode = mainModeIdentifier.identifyMainMode(originalTrip.getTripElements());
         String outputMode = mainModeIdentifier.identifyMainMode(outputTrip.getTripElements());
 
+        System.out.println(originalMode + "," + outputMode);
 
-        if(originalMode.equals(outputMode)){
-            return;
-        } else if(outputMode.equals(mode)){
-            if(!this.fromOtherMode2ThisMode.containsKey(originalMode)){
-                this.fromOtherMode2ThisMode.put(originalMode,0);
-            }
-            this.fromOtherMode2ThisMode.put(originalMode, this.fromOtherMode2ThisMode.get(originalMode)+1);
-        } else if (originalMode.equals(mode)){
-            if(!this.fromThisMode2otherMode.containsKey(outputMode)){
-                this.fromThisMode2otherMode.put(outputMode,0);
-            }
-            this.fromThisMode2otherMode.put(outputMode, this.fromThisMode2otherMode.get(outputMode) - 1);
+        Map<String,String> mode2mode = new HashMap<>();
+        mode2mode.put(originalMode,outputMode);
+        if(!this.mode2mode2num.containsKey(mode2mode)){
+            this.mode2mode2num.put(mode2mode,1);
+        } else {
+            this.mode2mode2num.put(mode2mode, this.mode2mode2num.get(mode2mode) + 1);
         }
     }
 
@@ -95,21 +89,29 @@ public class ModalShift2DrtAnalysis {
     }
 
     public static void main(String[] args) throws Exception {
-        Population outputPop = getPopulation("EPSG:31468","/Users/zhuoxiaomeng/Forschung/berlin-drt-v5.5-1pct_drt1-3s4.output_plans.xml.gz");
-        Population originalPop = getPopulation("GK4","/Users/zhuoxiaomeng/Forschung/berlin-v5.5-1pct.output_plans.xml");
-        int a = 0;
-        int b = 0;
-        for(Person person: outputPop.getPersons().values()){
-            var trips = TripStructureUtils.getTrips(person.getSelectedPlan());
-            var drtTrips = trips.stream().filter(trip ->  new MainModeIdentifierImpl().identifyMainMode(trip.getTripElements()).equals("drt")).collect(Collectors.toList()).size();
+        Population originalPop = getPopulation("GK4","originalPop");
 
-            a+= trips.size();
-            b+= drtTrips;
+        Population outputPop = getPopulation("EPSG:31468","outputPop");
+        //outputPopWriter(outputPop,"outputPop");
+//
+        ModalShift2DrtAnalysis modalShift2DrtAnalysis = new ModalShift2DrtAnalysis(originalPop,outputPop);
+        modalShift2DrtAnalysis.analysis();
+    }
+
+    private static void outputPopWriter(Population population,String string) {
+        Population outputPopulation = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation();
+        for (Person person : population.getPersons().values()) {
+
+            Person outPerson = outputPopulation.getFactory().createPerson(person.getId());
+
+            Plan selectedPlan = person.getSelectedPlan();
+
+            Plan outputPlan = outputPopulation.getFactory().createPlan();
+            PopulationUtils.copyFromTo(selectedPlan, outputPlan);
+            outPerson.addPlan(outputPlan);
+            outputPopulation.addPerson(outPerson);
 
         }
-        System.out.println(a);
-        System.out.println(b);
-        ModalShift2DrtAnalysis modalShift2DrtAnalysis = new ModalShift2DrtAnalysis(TransportMode.drt,originalPop,outputPop);
-        modalShift2DrtAnalysis.analysis();
+        new PopulationWriter(outputPopulation).write(string);
     }
 }
