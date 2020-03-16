@@ -32,6 +32,7 @@ import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
@@ -90,7 +91,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     public void handleEvent(PersonArrivalEvent event) {
 
         if (this.personId2drtTripInfoCollector.containsKey(event.getPersonId())) {
-            var drtTrip = this.personId2drtTripInfoCollector.get(event.getPersonId());
+            RealDrtTripInfo drtTrip = this.personId2drtTripInfoCollector.get(event.getPersonId());
             if (event.getLegMode().equals(smartDrtFareConfigGroup.getDrtMode())) {
                 drtTrip.setFindDrtArrivalEvent(true);
                 drtTrip.setDrtArrivalEvent(event);
@@ -106,15 +107,15 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                 Id<Link> departureLinkID = drtTrip.getRealActivityEndEvent().getLinkId();
                 Id<Link> arrivalLinkID = drtTrip.getLastArrivalEvent().getLinkId();
 
-                var ptTrips = personId2estimatePtTrips.get(event.getPersonId());
+                List<EstimatePtTrip> ptTrips = personId2estimatePtTrips.get(event.getPersonId());
 
                 EstimatePtTrip temEstimatePtTrip = new EstimatePtTrip(scenario, departureLinkID, arrivalLinkID, departureTime);
                 EstimatePtTrip estimatePtTrip = temEstimatePtTrip.updatePtTrips(ptTrips);
 
                 if (!estimatePtTrip.isHasPtTravelTime()) {
                     estimatePtTrip.setHasPtTravelTime(true);
-                    var planElements = tripRouter.calcRoute(TransportMode.pt, estimatePtTrip.getDepartureFacility(), estimatePtTrip.getArrivalFacility(), estimatePtTrip.getDepartureTime(), scenario.getPopulation().getPersons().get(event.getPersonId()));
-                    var ptTravelTime = planElements.stream().filter(planElement -> (planElement instanceof Leg)).mapToDouble(planElement -> ((Leg) planElement).getTravelTime()).sum();
+                    List planElements = tripRouter.calcRoute(TransportMode.pt, estimatePtTrip.getDepartureFacility(), estimatePtTrip.getArrivalFacility(), estimatePtTrip.getDepartureTime(), scenario.getPopulation().getPersons().get(event.getPersonId()));
+                    double ptTravelTime = planElements.stream().filter(planElement -> (planElement instanceof Leg)).mapToDouble(planElement -> ((Leg) planElement).getTravelTime()).sum();
                     estimatePtTrip.setPtTravelTime(ptTravelTime);
                     newCalculatedNumOfPtTrips++;
                 }
@@ -147,7 +148,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     public void handleEvent(DrtRequestSubmittedEvent event) {
         // store agent Id who really used drt
         if (this.smartDrtFareConfigGroup.getDrtMode().equals(event.getMode()) && this.personId2drtTripInfoCollector.containsKey(event.getPersonId())) {
-            var drtTripInfo = this.personId2drtTripInfoCollector.get(event.getPersonId());
+            RealDrtTripInfo drtTripInfo = this.personId2drtTripInfoCollector.get(event.getPersonId());
             drtTripInfo.setDrtRequestSubmittedEvent(event);
             drtTripInfo.setDrtTrip(true);
         }
