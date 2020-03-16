@@ -32,6 +32,7 @@ import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -47,6 +48,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author ikaddoura zmeng
@@ -62,6 +64,8 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     private TripRouter tripRouter;
     @Inject
     private SmartDrtFareConfigGroup smartDrtFareConfigGroup;
+    @Inject
+    private DrtFaresConfigGroup drtFaresConfigGroup;
 
     private int currentIteration;
     private BufferedWriter bw = null;
@@ -121,8 +125,9 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
                 if ( ratio <= ratioThreshold) {
                     // pt is faster than DRT --> add fare penalty
-                    //TODO optimize the penalty system
-                    double penalty = this.smartDrtFareConfigGroup.getPenalty();
+                    double baseFare = this.drtFaresConfigGroup.getDrtFareConfigGroups().stream().filter(drtFareConfigGroup -> drtFareConfigGroup.getMode().equals(TransportMode.drt)).collect(Collectors.toList()).get(0).getDistanceFare_m();
+                    double penaltyPerMeter = this.smartDrtFareConfigGroup.getPenaltyFactor() * baseFare * ratioThreshold / ratio - baseFare;
+                    double penalty = drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideDistance() * penaltyPerMeter;
                     events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty));
                     estimatePtTrip.setPenalty(penalty);
                     numOfHasPenaltyDrtUsers++;
