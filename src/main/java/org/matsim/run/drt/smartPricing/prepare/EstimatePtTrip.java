@@ -19,14 +19,11 @@
 
 package org.matsim.run.drt.smartPricing.prepare;
 
-import com.google.inject.Inject;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
-import org.matsim.run.drt.smartPricing.SmartDRTFareComputation;
 
 import java.util.List;
 import java.util.Map;
@@ -41,13 +38,17 @@ public class EstimatePtTrip {
     private Id<Link> departureLinkId;
     private Id<Link> arrivalLinkId;
     private double departureTime;
+    private double arrivalTime;
     private double ptTravelTime;
     private boolean hasPtTravelTime = false;
     private Facility departureFacility;
     private Facility arrivalFacility;
     private double penalty;
-    private double realDrtTravelTime;
-    private double realDrtTotalTripTime;
+    private double penaltyPerMeter;
+    private double unsharedDrtTime;
+    private double unsharedDrtDistance;
+    private double ratio;
+
 
 
     public EstimatePtTrip(Scenario scenario, Id<Link> departureLinkId, Id<Link> arrivalLinkId, double departureTime) {
@@ -128,12 +129,16 @@ public class EstimatePtTrip {
         return penalty;
     }
 
-    public double getRealDrtTravelTime() {
-        return realDrtTravelTime;
+    public void setPenaltyPerMeter(double penaltyPerMeter) { this.penaltyPerMeter = penaltyPerMeter;}
+
+    public double getPenaltyPerMeter(){return penaltyPerMeter;}
+
+    public double getUnsharedDrtTime() {
+        return unsharedDrtTime;
     }
 
-    public void setRealDrtTravelTime(double realDrtTravelTime) {
-        this.realDrtTravelTime = realDrtTravelTime;
+    public void setUnsharedDrtTime(double unsharedDrtTime) {
+        this.unsharedDrtTime = unsharedDrtTime;
     }
 
     public Id<Link> getDepartureLinkId() {
@@ -172,7 +177,16 @@ public class EstimatePtTrip {
         return arrivalFacility;
     }
 
-    public void setRealTotalTravelTime(double realDrtTotalTripTime) { this.realDrtTotalTripTime = realDrtTotalTripTime; }
+    public double getArrivalTime() { return arrivalTime; }
 
-    public double getRealDrtTotalTripTime() { return realDrtTotalTripTime; }
+    public void setArrivalTime(double arrivalTime) { this.arrivalTime = arrivalTime; }
+
+    public double getUnsharedDrtDistance() { return unsharedDrtDistance; }
+
+    public void setUnsharedDrtDistance(double unsharedDrtDistance) { this.unsharedDrtDistance = unsharedDrtDistance; }
+
+    public void setRatio(double ratio) { this.ratio = ratio; }
+
+    public double getRatio() { return this.ratio;}
+
 }

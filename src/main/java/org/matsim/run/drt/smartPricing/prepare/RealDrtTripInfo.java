@@ -65,7 +65,7 @@ public class RealDrtTripInfo {
                 + (lastArrivalEvent.getTime() - drtArrivalEvent.getTime());
     }
 
-    public double getTotalTripTime() {
+    public double getTotalUnsharedTripTime() {
         return this.getWalkTime() + this.drtRequestSubmittedEvent.getUnsharedRideTime();
     }
     public double getRealDrtTotalTripTime(){

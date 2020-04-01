@@ -43,6 +43,27 @@ public class SmartDRTFareComputationTest {
     }
 
     @Test
+    public void testTripInfoCollector() {
+        String configFilename = "scenarios/berlin-v5.5-1pct/input/drt/berlin-drt-v5.5-1pct.config.xml";
+        final String[] args = {configFilename,
+                "--config:plans.inputPlansFile", "../../../../test/input/drt/drt-test-agents.xml",
+                "--config:strategy.fractionOfIterationsToDisableInnovation", "0.8",
+                "--config:controler.runId", "testTripInfoCollector",
+                "--config:controler.lastIteration", "1",
+                "--config:swissRailRaptor.useIntermodalAccessEgress","false",
+                "--config:controler.outputDirectory", utils.getOutputDirectory()};
+
+        Config config = RunDrtOpenBerlinScenario.prepareConfig(args);
+
+        ConfigUtils.addOrGetModule(config, SmartDrtFareConfigGroup.class);
+        Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
+
+        Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
+        controler.addOverridingModule(new SmartDRTFareModule());
+        controler.run();
+    }
+
+    @Test
     public void test1pctScenario(){
         String configFilename = "/Users/zhuoxiaomeng/Forschung/base1/berlin-drt-smartPricing-v5.5-1pct.config.xml";
         final String[] args = {configFilename,

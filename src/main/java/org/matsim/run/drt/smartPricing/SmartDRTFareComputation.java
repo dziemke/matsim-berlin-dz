@@ -32,7 +32,6 @@ import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
@@ -119,9 +118,11 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                     estimatePtTrip.setPtTravelTime(ptTravelTime);
                     newCalculatedNumOfPtTrips++;
                 }
-                estimatePtTrip.setRealDrtTravelTime(drtTrip.getTotalTripTime());
-                estimatePtTrip.setRealTotalTravelTime(drtTrip.getRealDrtTotalTripTime());
-                double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getTotalTripTime();
+                estimatePtTrip.setUnsharedDrtTime(drtTrip.getTotalUnsharedTripTime());
+                estimatePtTrip.setArrivalTime(drtTrip.getLastArrivalEvent().getTime());
+                estimatePtTrip.setUnsharedDrtDistance(drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideDistance());
+                double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getTotalUnsharedTripTime();
+                estimatePtTrip.setRatio(ratio);
                 double ratioThreshold = this.smartDrtFareConfigGroup.getRatioThreshold();
 
                 if ( ratio <= ratioThreshold) {
@@ -129,7 +130,8 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                     double baseFare = this.drtFaresConfigGroup.getDrtFareConfigGroups().stream().filter(drtFareConfigGroup -> drtFareConfigGroup.getMode().equals(TransportMode.drt)).collect(Collectors.toList()).get(0).getDistanceFare_m();
                     double penaltyPerMeter = this.smartDrtFareConfigGroup.getPenaltyFactor() * baseFare * ratioThreshold / ratio - baseFare;
                     double penalty = drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideDistance() * penaltyPerMeter;
-                    events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty));
+                    events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty,"penalty","drt"));
+                    estimatePtTrip.setPenaltyPerMeter(penaltyPerMeter);
                     estimatePtTrip.setPenalty(penalty);
                     numOfHasPenaltyDrtUsers++;
 
@@ -174,7 +176,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
         try {
             bw = new BufferedWriter(new FileWriter(file));
-            bw.write("it,PersonId,DepartureLink,ArrivalLink,departureTime,UnsharedDrtTime,wholeRealTripTime,EstimatePtTime,penalty");
+            bw.write("it,personId,departureLink,arrivalLink,departureTime,arrivalTime,unsharedDrtTime,unsharedDrtDistance,EstimatePtTime,ratio,penalty_meter,penalty");
             for (Id<Person> personId : this.personId2estimatePtTripsCurrentIt.keySet()) {
                 for(EstimatePtTrip estimatePtTrip : this.personId2estimatePtTripsCurrentIt.get(personId)){
                     bw.newLine();
@@ -183,9 +185,12 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                             estimatePtTrip.getDepartureLinkId() + "," +
                             estimatePtTrip.getArrivalLinkId() + "," +
                             estimatePtTrip.getDepartureTime() + "," +
-                            estimatePtTrip.getRealDrtTravelTime() + "," +
-                            estimatePtTrip.getRealDrtTotalTripTime() + "," +
+                            estimatePtTrip.getArrivalTime() + "," +
+                            estimatePtTrip.getUnsharedDrtTime() + "," +
+                            estimatePtTrip.getUnsharedDrtDistance() + "," +
                             estimatePtTrip.getPtTravelTime() + "," +
+                            estimatePtTrip.getRatio() + "," +
+                            estimatePtTrip.getPenaltyPerMeter() + "," +
                             estimatePtTrip.getPenalty());
                 }
             }
