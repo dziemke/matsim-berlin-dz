@@ -48,6 +48,7 @@ public class EstimatePtTrip {
     private double unsharedDrtTime;
     private double unsharedDrtDistance;
     private double ratio;
+    private double ratioThreshold;
 
 
 
@@ -162,7 +163,12 @@ public class EstimatePtTrip {
     }
 
     public void setPtTravelTime(double ptTravelTime) {
-        this.ptTravelTime = ptTravelTime;
+        if (ptTravelTime <= 0.0) {
+            this.ptTravelTime = 0.001;
+        } else {
+            this.ptTravelTime = ptTravelTime;
+        }
+
     }
 
     public void setHasPtTravelTime(boolean hasPtTravelTime) {
@@ -189,4 +195,7 @@ public class EstimatePtTrip {
 
     public double getRatio() { return this.ratio;}
 
+    public void setRatioThreshold(double ratioThreshold) {this.ratioThreshold = ratioThreshold;}
+
+    public double getRatioThreshold() { return ratioThreshold; }
 }

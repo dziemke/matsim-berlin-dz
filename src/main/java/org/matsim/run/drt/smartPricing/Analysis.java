@@ -47,15 +47,14 @@ public class Analysis implements BasicEventHandler {
     }
 
     public static void main(String[] args) {
-        String dic = args[0];
-        Config config = ConfigUtils.loadConfig(dic + "berlin-drt-v5.5-1pct.output_config.xml");
-        config.controler().setOutputDirectory(dic);
-        config.plans().setInputFile(dic + "berlin-drt-v5.5-1pct.output_plans.xml.gz");
+
+        Config config = ConfigUtils.loadConfig("/net/ils3/meng/smartDrtPricing/10pct-Berlin-Scenario/10pct-base-speed-up/berlin-drt-v5.5-10pct-smartPricing-noPenalty.config.xml");
         Scenario scenario = ScenarioUtils.loadScenario(config);
+        config.controler().setOutputDirectory(args[0]);
         TripsInfoCollector tripsInfoCollector = new TripsInfoCollector();
         tripsInfoCollector.setScenario(scenario);
         tripsInfoCollector.reset(1);
-        String eventsFile= dic + "/berlin-drt-v5.5-1pct.output_events.xml.gz";
+        String eventsFile= args[1];
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(tripsInfoCollector);
         MatsimEventsReader reader = new MatsimEventsReader(eventsManager);

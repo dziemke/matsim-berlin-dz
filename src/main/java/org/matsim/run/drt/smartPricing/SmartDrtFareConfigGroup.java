@@ -34,6 +34,9 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     private static final String FARE_TIME_BIN_SIZE = "fareTimeBinSize";
     private static final String COST_PER_VEHICLE_PER_SECOND = "costPerVehiclePerSecond";
     private static final String COST_PER_VEHICLE_PER_METER = "costPerVehPerMeter";
+    private static final String RATIO_THRESHOLD_FACTOR_A = "ratioThresholdFactorA";
+    private static final String RATIO_THRESHOLD_FACTOR_B = "ratioThresholdFactorB";
+    private static final String RATIO_THRESHOLD_FACTOR_C = "ratioThresholdFactorC";
 
     public SmartDrtFareConfigGroup() {
         super(GROUP_NAME);
@@ -44,8 +47,11 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     private double fareTimeBinSize = 129601;
     private String drtMode = "drt";
     private double penaltyFactor = 1;
-    private double ratioThreshold = 3.;
-    private int writeFileInterval = 2;
+    private double ratioThreshold = 0;
+    private double ratioThresholdFactorA = 0;
+    private double ratioThresholdFactorB = 0;
+    private double ratioThresholdFactorC = 0;
+    private int writeFileInterval = 1;
 
     @StringSetter(WRITE_FILE_INTERVAL)
     public void setWriteFileInterval(int writeFileInterval) { this.writeFileInterval = writeFileInterval; }
@@ -75,4 +81,17 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public double getFareTimeBinSize() { return fareTimeBinSize; }
     @StringSetter(FARE_TIME_BIN_SIZE)
     public void setFareTimeBinSize(double fareTimeBinSize) { this.fareTimeBinSize = fareTimeBinSize; }
+    @StringGetter(RATIO_THRESHOLD_FACTOR_A)
+    public double getRatioThresholdFactorA() { return ratioThresholdFactorA; }
+    @StringSetter(RATIO_THRESHOLD_FACTOR_A)
+    public void setRatioThresholdFactorA(double ratioThresholdFactorA) { this.ratioThresholdFactorA = ratioThresholdFactorA; }
+    @StringGetter(RATIO_THRESHOLD_FACTOR_B)
+    public double getRatioThresholdFactorB() { return ratioThresholdFactorB; }
+    @StringSetter(RATIO_THRESHOLD_FACTOR_B)
+    public void setRatioThresholdFactorB(double ratioThresholdFactorB) { this.ratioThresholdFactorB = ratioThresholdFactorB; }
+    @StringGetter(RATIO_THRESHOLD_FACTOR_C)
+    public double getRatioThresholdFactorC() { return ratioThresholdFactorC; }
+    @StringSetter(RATIO_THRESHOLD_FACTOR_C)
+    public void setRatioThresholdFactorC(double ratioThresholdFactorC) { this.ratioThresholdFactorC = ratioThresholdFactorC; }
+
 }
