@@ -45,10 +45,13 @@ public class EstimatePtTrip {
     private Facility arrivalFacility;
     private double penalty;
     private double penaltyPerMeter;
+    private double reward;
+    private double rewardPerMeter;
     private double unsharedDrtTime;
     private double unsharedDrtDistance;
     private double ratio;
-    private double ratioThreshold;
+    private double penaltyRatioThreshold;
+    private double rewardRatioThreshold;
 
 
 
@@ -168,7 +171,6 @@ public class EstimatePtTrip {
         } else {
             this.ptTravelTime = ptTravelTime;
         }
-
     }
 
     public void setHasPtTravelTime(boolean hasPtTravelTime) {
@@ -195,7 +197,19 @@ public class EstimatePtTrip {
 
     public double getRatio() { return this.ratio;}
 
-    public void setRatioThreshold(double ratioThreshold) {this.ratioThreshold = ratioThreshold;}
+    public void setPenaltyRatioThreshold(double penaltyRatioThreshold) {this.penaltyRatioThreshold = penaltyRatioThreshold;}
 
-    public double getRatioThreshold() { return ratioThreshold; }
+    public double getPenaltyRatioThreshold() { return penaltyRatioThreshold; }
+
+    public double getRewardRatioThreshold() { return rewardRatioThreshold; }
+
+    public void setRewardRatioThreshold(double rewardRatioThreshold) { this.rewardRatioThreshold = rewardRatioThreshold; }
+
+    public double getReward() { return reward; }
+
+    public void setReward(double reward) { this.reward = reward; }
+
+    public double getRewardPerMeter() { return rewardPerMeter; }
+
+    public void setRewardPerMeter(double rewardPerMeter) { this.rewardPerMeter = rewardPerMeter; }
 }

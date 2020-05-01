@@ -52,13 +52,12 @@ public class SmartDRTFareComputationTest {
     }
 
     @Test
-    public void testTripInfoCollector() {
-        String configFilename = "scenarios/berlin-v5.5-1pct/input/drt/berlin-drt-v5.5-1pct.config.xml";
+    public void test1pctScenario(){
+        String configFilename = "/Users/zhuoxiaomeng/IdeaProjects/matsim-berlin/scenarios/berlin-v5.5-1pct/input/drt/berlin-drt-v5.5-1pct.config.xml";
         final String[] args = {configFilename,
-                "--config:plans.inputPlansFile", "../../../../test/input/drt/drt-test-agents.xml",
-                "--config:strategy.fractionOfIterationsToDisableInnovation", "0.8",
-                "--config:controler.runId", "testTripInfoCollector",
-                "--config:controler.lastIteration", "1",
+                "--config:strategy.fractionOfIterationsToDisableInnovation", "1",
+                "--config:controler.runId", "test1pctScenario",
+                "--config:controler.lastIteration", "4",
                 "--config:swissRailRaptor.useIntermodalAccessEgress","false",
                 "--config:controler.outputDirectory", utils.getOutputDirectory()};
 
@@ -67,19 +66,25 @@ public class SmartDRTFareComputationTest {
         ConfigUtils.addOrGetModule(config, SmartDrtFareConfigGroup.class);
         Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
 
+        for( Person person : scenario.getPopulation().getPersons().values() ){
+            person.getPlans().removeIf( (plan) -> plan!=person.getSelectedPlan() ) ;
+        }
+
         Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
         controler.addOverridingModule(new SmartDRTFareModule());
         controler.run();
     }
 
     @Test
-    public void test1pctScenario(){
+    public void test1pctScenarioWithReward(){
         String configFilename = "/Users/zhuoxiaomeng/IdeaProjects/matsim-berlin/scenarios/berlin-v5.5-1pct/input/drt/berlin-drt-v5.5-1pct.config.xml";
         final String[] args = {configFilename,
+                "--config:plans.inputPlansFile","/Users/zhuoxiaomeng/Desktop/test1pctScenario.output_plans.xml.gz",
                 "--config:strategy.fractionOfIterationsToDisableInnovation", "1",
                 "--config:controler.runId", "test1pctScenario",
                 "--config:controler.lastIteration", "4",
                 "--config:swissRailRaptor.useIntermodalAccessEgress","false",
+                "--config:berlinExperimental.populationDownsampleFactor", "1.0",
                 "--config:controler.outputDirectory", utils.getOutputDirectory()};
 
         Config config = RunDrtOpenBerlinScenario.prepareConfig(args);

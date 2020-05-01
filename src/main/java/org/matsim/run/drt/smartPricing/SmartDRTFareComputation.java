@@ -74,6 +74,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
     private Map<Id<Person>, List<EstimatePtTrip>> personId2estimatePtTripsCurrentIt = new HashMap<>();
     private int newCalculatedNumOfPtTrips= 0;
     private int numOfHasPenaltyDrtUsers = 0;
+    private int numOfHasRewardDrtUsers = 0;
     private int totalDrtUsers = 0;
 
     @Override
@@ -83,6 +84,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
         personId2estimatePtTripsCurrentIt.clear();
         newCalculatedNumOfPtTrips = 0;
         numOfHasPenaltyDrtUsers = 0;
+        numOfHasRewardDrtUsers = 0;
         totalDrtUsers = 0;
     }
 
@@ -124,20 +126,39 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                 double ratio = estimatePtTrip.getPtTravelTime() / drtTrip.getTotalUnsharedTripTime();
                 estimatePtTrip.setRatio(ratio);
                 double x = estimatePtTrip.getUnsharedDrtDistance() / 1000;
-                double ratioThreshold = this.smartDrtFareConfigGroup.getRatioThresholdFactorA()*Math.pow(x,3) +
-                        this.smartDrtFareConfigGroup.getRatioThresholdFactorB()*Math.pow(x,2) +
-                        this.smartDrtFareConfigGroup.getRatioThresholdFactorC() * x +
-                        this.smartDrtFareConfigGroup.getRatioThreshold();
-                estimatePtTrip.setRatioThreshold(ratioThreshold);
-                if ( ratio <= ratioThreshold) {
-                    // pt is faster than DRT --> add fare penalty
-                    double baseFare = this.drtFaresConfigGroup.getDrtFareConfigGroups().stream().filter(drtFareConfigGroup -> drtFareConfigGroup.getMode().equals(TransportMode.drt)).collect(Collectors.toList()).get(0).getDistanceFare_m();
-                    double penaltyPerMeter = this.smartDrtFareConfigGroup.getPenaltyFactor() * baseFare * ratioThreshold / ratio - baseFare;
-                    double penalty = drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideDistance() * penaltyPerMeter;
-                    events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty,"penalty","drt"));
-                    estimatePtTrip.setPenaltyPerMeter(penaltyPerMeter);
-                    estimatePtTrip.setPenalty(penalty);
-                    numOfHasPenaltyDrtUsers++;
+
+                double penaltyRatioThreshold = this.smartDrtFareConfigGroup.getPenaltyRatioThresholdFactorA()*Math.pow(x,3) +
+                        this.smartDrtFareConfigGroup.getPenaltyRatioThresholdFactorB()*Math.pow(x,2) +
+                        this.smartDrtFareConfigGroup.getPenaltyRatioThresholdFactorC() * x +
+                        this.smartDrtFareConfigGroup.getPenaltyRatioThreshold();
+
+                double rewardRatioThreshold = this.smartDrtFareConfigGroup.getRewardRatioThresholdFactorA()*Math.pow(x,3) +
+                        this.smartDrtFareConfigGroup.getRewardRatioThresholdFactorB()*Math.pow(x,2) +
+                        this.smartDrtFareConfigGroup.getRewardRatioThresholdFactorC() * x +
+                        this.smartDrtFareConfigGroup.getRewardRatioThreshold();
+
+                estimatePtTrip.setPenaltyRatioThreshold(penaltyRatioThreshold);
+                estimatePtTrip.setRewardRatioThreshold(rewardRatioThreshold);
+                double baseDistanceFare = this.drtFaresConfigGroup.getDrtFareConfigGroups().stream().filter(drtFareConfigGroup -> drtFareConfigGroup.getMode().equals(TransportMode.drt)).collect(Collectors.toList()).get(0).getDistanceFare_m();
+                double baseTripFare = this.drtFaresConfigGroup.getDrtFareConfigGroups().stream().filter(drtFareConfigGroup -> drtFareConfigGroup.getMode().equals(TransportMode.drt)).collect(Collectors.toList()).get(0).getBasefare();
+                if(estimatePtTrip.getUnsharedDrtDistance() <= smartDrtFareConfigGroup.getMaxDrtDistance()){
+                    if ( ratio <= penaltyRatioThreshold) {
+                        // pt is faster than DRT --> add fare penalty
+                        double penaltyPerMeter = this.smartDrtFareConfigGroup.getPenaltyFactor() * baseDistanceFare * penaltyRatioThreshold / ratio - baseDistanceFare;
+                        double penalty = drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideDistance() * penaltyPerMeter;
+                        events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -penalty,"penalty","drt"));
+                        estimatePtTrip.setPenaltyPerMeter(penaltyPerMeter);
+                        estimatePtTrip.setPenalty(penalty);
+                        numOfHasPenaltyDrtUsers++;
+                    } else if(ratio >= rewardRatioThreshold) {
+                        double rewardPerMeter = Math.min(this.smartDrtFareConfigGroup.getRewardFactor()*baseDistanceFare,
+                                this.smartDrtFareConfigGroup.getRewardFactor() * baseDistanceFare * (ratio/rewardRatioThreshold - 1));
+                        double reward = drtTrip.getDrtRequestSubmittedEvent().getUnsharedRideDistance() * rewardPerMeter;
+                        events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), reward,"reward","drt"));
+                        estimatePtTrip.setReward(reward);
+                        estimatePtTrip.setRewardPerMeter(rewardPerMeter);
+                        numOfHasRewardDrtUsers++;
+                    }
                 }
                 if(!this.personId2estimatePtTripsCurrentIt.containsKey(event.getPersonId())){
                     this.personId2estimatePtTripsCurrentIt.put(event.getPersonId(),new LinkedList<>());
@@ -179,7 +200,7 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
 
         try {
             bw = new BufferedWriter(new FileWriter(file));
-            bw.write("it,personId,departureLink,arrivalLink,departureTime,arrivalTime,unsharedDrtTime,unsharedDrtDistance,EstimatePtTime,ratio,penalty_meter,penalty,ratioThreshold");
+            bw.write("it,personId,departureLink,arrivalLink,departureTime,arrivalTime,unsharedDrtTime,unsharedDrtDistance,EstimatePtTime,ratio,penalty_meter,penalty,penaltyRatioThreshold,reward_meter,reward,rewardRatioThreshold");
             for (Id<Person> personId : this.personId2estimatePtTripsCurrentIt.keySet()) {
                 for(EstimatePtTrip estimatePtTrip : this.personId2estimatePtTripsCurrentIt.get(personId)){
                     bw.newLine();
@@ -195,7 +216,10 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
                             estimatePtTrip.getRatio() + "," +
                             estimatePtTrip.getPenaltyPerMeter() + "," +
                             estimatePtTrip.getPenalty() + "," +
-                            estimatePtTrip.getRatioThreshold());
+                            estimatePtTrip.getPenaltyRatioThreshold() + "," +
+                            estimatePtTrip.getRewardPerMeter() + "," +
+                            estimatePtTrip.getReward() + "," +
+                            estimatePtTrip.getRewardRatioThreshold());
                 }
             }
             bw.close();
@@ -210,7 +234,8 @@ public class SmartDRTFareComputation implements DrtRequestSubmittedEventHandler,
         // num of has penalty drt users
         logger.info("num of drt users: "+totalDrtUsers+
                 " num of new calculated ptTravelTime " + newCalculatedNumOfPtTrips +
-                " num of has penalty drt users: " + numOfHasPenaltyDrtUsers);
+                " num of has penalty drt trips: " + numOfHasPenaltyDrtUsers +
+                "num of has reward drt trips: " +numOfHasRewardDrtUsers);
     }
 }
 

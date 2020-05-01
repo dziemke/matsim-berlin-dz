@@ -28,15 +28,26 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "smartDrtPricing";
     private static final String DRT_MODE = "drtMode";
-    private static final String PENALTY_FACTOR = "penalty_factor";
-    private static final String RATIO_THRESHOLD = "ratioThreshold";
+    private static final String MAX_DRT_DISTANCE = "maxDrtDistance";
+
+    private static final String PENALTY_STRATEGY = "penaltyStrategy";
+    private static final String PENALTY_FACTOR = "penaltyFactor";
+    private static final String PENALTY_RATIO_THRESHOLD = "penaltyRatioThreshold";
+    private static final String PENALTY_RATIO_THRESHOLD_FACTOR_A = "penaltyRatioThresholdFactorA";
+    private static final String PENALTY_RATIO_THRESHOLD_FACTOR_B = "penaltyRatioThresholdFactorB";
+    private static final String PENALTY_RATIO_THRESHOLD_FACTOR_C = "penaltyRatioThresholdFactorC";
+
+    private static final String REWARD_STRATEGY = "rewardStrategy";
+    private static final String REWARD_FACTOR = "rewardFactor";
+    private static final String REWARD_RATIO_THRESHOLD = "rewardRatioThreshold";
+    private static final String REWARD_RATIO_THRESHOLD_FACTOR_A = "rewardRatioThresholdFactorA";
+    private static final String REWARD_RATIO_THRESHOLD_FACTOR_B = "rewardRatioThresholdFactorB";
+    private static final String REWARD_RATIO_THRESHOLD_FACTOR_C = "rewardRatioThresholdFactorC";
+
     private static final String WRITE_FILE_INTERVAL = "writeFileInterval";
     private static final String FARE_TIME_BIN_SIZE = "fareTimeBinSize";
     private static final String COST_PER_VEHICLE_PER_SECOND = "costPerVehiclePerSecond";
     private static final String COST_PER_VEHICLE_PER_METER = "costPerVehPerMeter";
-    private static final String RATIO_THRESHOLD_FACTOR_A = "ratioThresholdFactorA";
-    private static final String RATIO_THRESHOLD_FACTOR_B = "ratioThresholdFactorB";
-    private static final String RATIO_THRESHOLD_FACTOR_C = "ratioThresholdFactorC";
 
     public SmartDrtFareConfigGroup() {
         super(GROUP_NAME);
@@ -46,11 +57,22 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     private double costPerVehiclePerSecond = 0.5 /900. ;
     private double fareTimeBinSize = 129601;
     private String drtMode = "drt";
+    private double maxDrtDistance = 40000;
+
+    private boolean penaltyStrategy = true;
     private double penaltyFactor = 1;
-    private double ratioThreshold = 0;
-    private double ratioThresholdFactorA = 0;
-    private double ratioThresholdFactorB = 0;
-    private double ratioThresholdFactorC = 0;
+    private double penaltyRatioThreshold = 2.40349274e+00;
+    private double penaltyRatioThresholdFactorA = -9.12263322e-06;
+    private double penaltyRatioThresholdFactorB = 1.43513764e-03;
+    private double penaltyRatioThresholdFactorC = -6.60221445e-02;
+
+    private boolean rewardStrategy = true;
+    private double rewardFactor = 0.4;
+    private double rewardRatioThreshold = 3.34209421e+00;
+    private double rewardRatioThresholdFactorA = -3.23284824e-06;
+    private double rewardRatioThresholdFactorB = 8.58041740e-04;
+    private double rewardRatioThresholdFactorC = -7.16475576e-02;
+
     private int writeFileInterval = 1;
 
     @StringSetter(WRITE_FILE_INTERVAL)
@@ -61,14 +83,11 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public String getDrtMode(){ return drtMode; }
     @StringSetter(DRT_MODE)
     public void setDrtMode(String drtMode) { this.drtMode = drtMode; }
-    @StringGetter(PENALTY_FACTOR)
-    public double getPenaltyFactor() { return penaltyFactor; }
-    @StringSetter(PENALTY_FACTOR)
-    public void setPenalty(double penaltyFactor) { this.penaltyFactor = penaltyFactor; }
-    @StringGetter(RATIO_THRESHOLD)
-    public double getRatioThreshold() { return ratioThreshold; }
-    @StringSetter(RATIO_THRESHOLD)
-    public void setRatioThreshold(double ratioThreshold) { this.ratioThreshold = ratioThreshold; }
+    @StringGetter(MAX_DRT_DISTANCE)
+    public double getMaxDrtDistance() { return maxDrtDistance; }
+    @StringSetter(MAX_DRT_DISTANCE)
+    public void setMaxDrtDistance(double maxDrtDistance) { this.maxDrtDistance = maxDrtDistance; }
+
     @StringGetter(COST_PER_VEHICLE_PER_METER)
     public double getCostPerVehPerMeter() { return costPerVehPerMeter; }
     @StringSetter(COST_PER_VEHICLE_PER_METER)
@@ -81,17 +100,47 @@ public class SmartDrtFareConfigGroup extends ReflectiveConfigGroup {
     public double getFareTimeBinSize() { return fareTimeBinSize; }
     @StringSetter(FARE_TIME_BIN_SIZE)
     public void setFareTimeBinSize(double fareTimeBinSize) { this.fareTimeBinSize = fareTimeBinSize; }
-    @StringGetter(RATIO_THRESHOLD_FACTOR_A)
-    public double getRatioThresholdFactorA() { return ratioThresholdFactorA; }
-    @StringSetter(RATIO_THRESHOLD_FACTOR_A)
-    public void setRatioThresholdFactorA(double ratioThresholdFactorA) { this.ratioThresholdFactorA = ratioThresholdFactorA; }
-    @StringGetter(RATIO_THRESHOLD_FACTOR_B)
-    public double getRatioThresholdFactorB() { return ratioThresholdFactorB; }
-    @StringSetter(RATIO_THRESHOLD_FACTOR_B)
-    public void setRatioThresholdFactorB(double ratioThresholdFactorB) { this.ratioThresholdFactorB = ratioThresholdFactorB; }
-    @StringGetter(RATIO_THRESHOLD_FACTOR_C)
-    public double getRatioThresholdFactorC() { return ratioThresholdFactorC; }
-    @StringSetter(RATIO_THRESHOLD_FACTOR_C)
-    public void setRatioThresholdFactorC(double ratioThresholdFactorC) { this.ratioThresholdFactorC = ratioThresholdFactorC; }
+
+    @StringGetter(PENALTY_FACTOR)
+    public double getPenaltyFactor() { return penaltyFactor; }
+    @StringSetter(PENALTY_FACTOR)
+    public void setPenalty(double penaltyFactor) { this.penaltyFactor = penaltyFactor; }
+    @StringGetter(PENALTY_RATIO_THRESHOLD)
+    public double getPenaltyRatioThreshold() { return penaltyRatioThreshold; }
+    @StringSetter(PENALTY_RATIO_THRESHOLD)
+    public void setPenaltyRatioThreshold(double penaltyRatioThreshold) { this.penaltyRatioThreshold = penaltyRatioThreshold; }
+    @StringGetter(PENALTY_RATIO_THRESHOLD_FACTOR_A)
+    public double getPenaltyRatioThresholdFactorA() { return penaltyRatioThresholdFactorA; }
+    @StringSetter(PENALTY_RATIO_THRESHOLD_FACTOR_A)
+    public void setPenaltyRatioThresholdFactorA(double penaltyRatioThresholdFactorA) { this.penaltyRatioThresholdFactorA = penaltyRatioThresholdFactorA; }
+    @StringGetter(PENALTY_RATIO_THRESHOLD_FACTOR_B)
+    public double getPenaltyRatioThresholdFactorB() { return penaltyRatioThresholdFactorB; }
+    @StringSetter(PENALTY_RATIO_THRESHOLD_FACTOR_B)
+    public void setPenaltyRatioThresholdFactorB(double penaltyRatioThresholdFactorB) { this.penaltyRatioThresholdFactorB = penaltyRatioThresholdFactorB; }
+    @StringGetter(PENALTY_RATIO_THRESHOLD_FACTOR_C)
+    public double getPenaltyRatioThresholdFactorC() { return penaltyRatioThresholdFactorC; }
+    @StringSetter(PENALTY_RATIO_THRESHOLD_FACTOR_C)
+    public void setPenaltyRatioThresholdFactorC(double penaltyRatioThresholdFactorC) { this.penaltyRatioThresholdFactorC = penaltyRatioThresholdFactorC; }
+
+    @StringGetter(REWARD_FACTOR)
+    public double getRewardFactor() { return rewardFactor; }
+    @StringSetter(REWARD_FACTOR)
+    public void setReward(double rewardFactor) { this.rewardFactor = rewardFactor; }
+    @StringGetter(REWARD_RATIO_THRESHOLD)
+    public double getRewardRatioThreshold() { return rewardRatioThreshold; }
+    @StringSetter(REWARD_RATIO_THRESHOLD)
+    public void setRewardRatioThreshold(double rewardRatioThreshold) { this.rewardRatioThreshold = rewardRatioThreshold; }
+    @StringGetter(REWARD_RATIO_THRESHOLD_FACTOR_A)
+    public double getRewardRatioThresholdFactorA() { return rewardRatioThresholdFactorA; }
+    @StringSetter(REWARD_RATIO_THRESHOLD_FACTOR_A)
+    public void setRewardRatioThresholdFactorA(double rewardRatioThresholdFactorA) { this.rewardRatioThresholdFactorA = rewardRatioThresholdFactorA; }
+    @StringGetter(REWARD_RATIO_THRESHOLD_FACTOR_B)
+    public double getRewardRatioThresholdFactorB() { return rewardRatioThresholdFactorB; }
+    @StringSetter(REWARD_RATIO_THRESHOLD_FACTOR_B)
+    public void setRewardRatioThresholdFactorB(double rewardRatioThresholdFactorB) { this.rewardRatioThresholdFactorB = rewardRatioThresholdFactorB; }
+    @StringGetter(REWARD_RATIO_THRESHOLD_FACTOR_C)
+    public double getRewardRatioThresholdFactorC() { return rewardRatioThresholdFactorC; }
+    @StringSetter(REWARD_RATIO_THRESHOLD_FACTOR_C)
+    public void setRewardRatioThresholdFactorC(double rewardRatioThresholdFactorC) { this.rewardRatioThresholdFactorC = rewardRatioThresholdFactorC; }
 
 }
