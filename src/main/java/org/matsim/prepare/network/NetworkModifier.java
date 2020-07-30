@@ -19,7 +19,7 @@ public class NetworkModifier {
 
     public static void main (String[] args) {
         String networkInputFile = "../../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
-        String networkOutputFile = "network-modified.xml.gz";
+        String networkOutputFile = "scenarios/berlin-v5.5-1pct/input/network-modified-carInternal.xml.gz";
 
         String areaShapeFile = "../../shared-svn/studies/countries/de/open_berlin_scenario/input/shapefiles/berlin_hundekopf/berlin_hundekopf.shp";
 
