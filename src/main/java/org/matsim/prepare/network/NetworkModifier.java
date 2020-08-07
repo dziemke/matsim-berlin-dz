@@ -21,6 +21,9 @@ import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.*;
 
+/**
+ * @author dziemke
+ */
 public class NetworkModifier {
     private static final Logger LOG = Logger.getLogger(NetworkModifier.class);
 
