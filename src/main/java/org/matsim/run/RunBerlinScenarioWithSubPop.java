@@ -132,6 +132,7 @@ public final class RunBerlinScenarioWithSubPop {
 			}
 		} );
 
+		// Add new plan strategy module
         controler.addOverridingModule( new AbstractModule(){
             @Override
             public void install(){
@@ -171,37 +172,17 @@ public final class RunBerlinScenarioWithSubPop {
 		 */
 		final Scenario scenario = ScenarioUtils.createScenario( config );
 
-		for (Link link : scenario.getNetwork().getLinks().values()){
-		    if (link.getAllowedModes().contains(TransportMode.car)) {
-                Set<String> modes = link.getAllowedModes();
-                modes.add("carInternal");
-                link.setAllowedModes(modes);
-            }
-        }
-
-		for (Person person: scenario.getPopulation().getPersons().values()) {
-            String subPop = (String) person.getAttributes().getAttribute("subpopulation");
-            if (subPop.equals("person")) {
-                person.getAttributes().putAttribute("subpopulation", "personInternal");
-            }
-        }
-
+		// Add carInternal vehicle type
 		VehiclesFactory vehiclesFactory = scenario.getVehicles().getFactory();
 		VehicleType carInternalVehicleType = vehiclesFactory.createVehicleType(Id.create("carInternal", VehicleType.class));
 		scenario.getVehicles().addVehicleType(carInternalVehicleType);
-
 
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
 		routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 		
 		ScenarioUtils.loadScenario(scenario);
 
-		//
-		Set<String> modesSet = new HashSet<>();
-		modesSet.add("walk");
-		Link link = scenario.getNetwork().getLinks().get(Id.createLinkId("59278"));
-		link.setAllowedModes(modesSet);
-
+		// Delete all links and routes
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			for (Plan plan : person.getPlans()) {
 				for (PlanElement pe : plan.getPlanElements()) {
@@ -215,8 +196,6 @@ public final class RunBerlinScenarioWithSubPop {
 				}
 			}
 		}
-
-		//
 
 		BerlinExperimentalConfigGroup berlinCfg = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
 		if (berlinCfg.getPopulationDownsampleFactor() != 1.0) {
